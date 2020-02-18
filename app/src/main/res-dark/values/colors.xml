@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary_dark">#181818</color>
+    <color name="colorPrimaryDark_dark">#181818</color>
+    <color name="colorAccent_dark">#181818</color>
+    <color name="colorWindowBackground_dark">#121212</color>
+    <color name="colorTextPrimary_dark">#FFFFFF</color>
+    <color name="colorTextAuxiliary_dark">#757575</color>
+    <color name="colorTextOther_dark">#616161</color>
+    <color name="colorTextAnti_dark">#000000</color>
+    <color name="colorTransparent_dark">#00000000</color>
+</resources>
