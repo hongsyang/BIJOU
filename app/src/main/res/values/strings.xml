@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">BIJOU</string>
+    <string name="open_start_drawer">打开左侧边栏</string>
+    <string name="search_hint">世界从这里开始</string>
+    <string name="dark_mode">深色模式</string>
+    <string name="bijou_2">BIJOU 2</string>
+    <string name="word">期待你的如约而至</string>
+    <string name="no_trace">无痕浏览</string>
+    <string name="ua_pc">桌面版UA</string>
+    <string name="full_screen">全屏模式</string>
+    <string name="bookmark">书签</string>
+    <string name="history">历史</string>
+    <string name="download">下载</string>
+    <string name="share">分享</string>
+    <string name="source">源码</string>
+    <string name="settings">设置</string>
+    <string name="export">导出</string>
+    <string name="ua">标识</string>
+    <string name="multiple_page">多窗口切换</string>
 </resources>

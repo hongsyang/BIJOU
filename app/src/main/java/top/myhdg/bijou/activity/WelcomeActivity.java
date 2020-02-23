@@ -24,10 +24,10 @@ public class WelcomeActivity extends BaseActivity {
         SharedPreferences prefs = getSharedPreferences("BIJOU", MODE_PRIVATE);
         boolean darkModeFollowSystem = prefs.getBoolean("dark_mode_follow_system", true);
         if (darkModeFollowSystem) {
-            if (isSystemDarkMode()){
+            if (isSystemDarkMode()) {
                 SkinCompatManager.getInstance().loadSkin("dark", SkinCompatManager.SKIN_LOADER_STRATEGY_BUILD_IN);
                 darkMode = true;
-            }else {
+            } else {
                 SkinCompatManager.getInstance().restoreDefaultTheme();
                 darkMode = false;
             }
@@ -44,7 +44,7 @@ public class WelcomeActivity extends BaseActivity {
         editor.putBoolean("dark_mode", darkMode);
         editor.apply();
 
-        int time = 400;
+        int time = 1000;
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override

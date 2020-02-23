@@ -1,10 +1,262 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorWindowBackground"
-    android:orientation="vertical">
+    android:fitsSystemWindows="true">
 
+    <skin.support.design.widget.SkinMaterialCoordinatorLayout
+        android:id="@+id/coordinator_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorWindowBackground">
 
+        <skin.support.design.widget.SkinMaterialAppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize">
 
-</LinearLayout>
+            <top.myhdg.bijou.view.EnhancedToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimary"
+                app:contentInsetLeft="0dp"
+                app:contentInsetStart="0dp"
+                app:layout_scrollFlags="scroll|enterAlways|snap">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <Button
+                        android:id="@+id/menu_button"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="20dp"
+                        android:background="@drawable/menu" />
+
+                    <EditText
+                        android:id="@+id/toolbar_edit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="20dp"
+                        android:layout_toEndOf="@id/menu_button"
+                        android:background="@color/colorTransparent"
+                        android:hint="@string/search_hint"
+                        android:inputType="text"
+                        android:lines="1"
+                        android:maxWidth="210dp"
+                        android:minWidth="150dp"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textColorHint="@color/colorTextOther"
+                        android:textSize="20sp"
+                        tools:ignore="Autofill,RelativeOverlap" />
+
+                    <Button
+                        android:id="@+id/go_button"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="20dp"
+                        android:layout_toStartOf="@id/multiple_button"
+                        android:background="@drawable/forward"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/multiple_button"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="20dp"
+                        android:background="@drawable/multiple" />
+
+                    <ProgressBar
+                        android:id="@+id/progress_bar"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="5dp"
+                        android:layout_alignParentBottom="true"
+                        android:max="100"
+                        android:progressDrawable="@drawable/progress_bar" />
+
+                </RelativeLayout>
+
+            </top.myhdg.bijou.view.EnhancedToolbar>
+
+        </skin.support.design.widget.SkinMaterialAppBarLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/suggest_recycler_iew"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:visibility="gone"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/layout_home"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/bijou_i"
+                    android:layout_width="200dp"
+                    android:layout_height="100dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="60dp"
+                    android:contentDescription="@string/app_name"
+                    android:scaleType="centerInside"
+                    android:src="@mipmap/bijou" />
+
+                <com.lihang.ShadowLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/bijou_i"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginStart="40dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginEnd="40dp"
+                    app:hl_cornerRadius="22dp"
+                    app:hl_shadowBackColor="@color/colorPrimary"
+                    app:hl_shadowColor="@color/colorTextPrimary"
+                    app:hl_shadowLimit="6dp">
+
+                    <TextView
+                        android:id="@+id/start_text"
+                        android:layout_width="300dp"
+                        android:layout_height="50dp"
+                        android:background="@drawable/start_text"
+                        android:gravity="start|center_vertical"
+                        android:hint="@string/search_hint"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp"
+                        android:textColorHint="@color/colorTextOther"
+                        android:textSize="20sp" />
+
+                </com.lihang.ShadowLayout>
+
+            </RelativeLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <LinearLayout
+                android:id="@+id/web_view_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorWindowBackground"
+                android:orientation="vertical" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        <com.github.clans.fab.FloatingActionMenu
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="30dp"
+            android:layout_marginBottom="48dp"
+            app:menu_colorNormal="@color/colorAccent"
+            app:menu_colorPressed="@color/colorAccent"
+            app:menu_icon="@drawable/fab_add">
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/fab_add_bookmark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="centerInside"
+                android:src="@drawable/fab_add_bookmark"
+                app:fab_colorNormal="@color/colorAccent"
+                app:fab_colorPressed="@color/colorAccent" />
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/fab_reload"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="centerInside"
+                android:src="@drawable/fab_reload"
+                app:fab_colorNormal="@color/colorAccent"
+                app:fab_colorPressed="@color/colorAccent" />
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/fab_go_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="centerInside"
+                android:src="@drawable/fab_go_back"
+                app:fab_colorNormal="@color/colorAccent"
+                app:fab_colorPressed="@color/colorAccent" />
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/fab_go_forward"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="centerInside"
+                android:src="@drawable/fab_go_forward"
+                app:fab_colorNormal="@color/colorAccent"
+                app:fab_colorPressed="@color/colorAccent" />
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/fab_home"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="centerInside"
+                android:src="@drawable/fab_home"
+                app:fab_colorNormal="@color/colorAccent"
+                app:fab_colorPressed="@color/colorAccent" />
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/fab_find"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="centerInside"
+                android:src="@drawable/fab_find"
+                app:fab_colorNormal="@color/colorAccent"
+                app:fab_colorPressed="@color/colorAccent" />
+
+        </com.github.clans.fab.FloatingActionMenu>
+
+    </skin.support.design.widget.SkinMaterialCoordinatorLayout>
+
+    <skin.support.design.widget.SkinMaterialNavigationView
+        android:id="@+id/nav_menu"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/colorWindowBackground">
+
+        <include layout="@layout/layout_menu" />
+
+    </skin.support.design.widget.SkinMaterialNavigationView>
+
+    <skin.support.design.widget.SkinMaterialNavigationView
+        android:id="@+id/nav_multiple"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@color/colorWindowBackground">
+
+        <include layout="@layout/layout_multiple" />
+
+    </skin.support.design.widget.SkinMaterialNavigationView>
+
+</androidx.drawerlayout.widget.DrawerLayout>

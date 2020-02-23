@@ -41,3 +41,15 @@ java.lang.Object readResolve();
   **[] $VALUES;
   public *;
 }
+
+#SwitchButton
+-keep class com.kyleduo.** {*;}
+
+#FloatingActionButton
+-keep class com.clans.** {*;}
+-keep class com.github.clans.** {*;}
+
+#ShadowLayout
+-keep class com.lihang.** {*;}
+-keep class com.github.lihangleo.** {*;}
+-keep class com.github.lihangleo2.** {*;}
