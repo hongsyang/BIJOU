@@ -77,14 +77,12 @@ public class BaseActivity extends AppCompatActivity {
     private void changeStatusColor() {
         if (darkMode) {
             ImmersionBar.with(this)
-                    .keyboardEnable(true)
                     .statusBarColor(R.color.colorPrimaryDark_dark)
                     .navigationBarColor(R.color.colorPrimaryDark_dark)
                     .autoDarkModeEnable(true)
                     .init();
         } else {
             ImmersionBar.with(this)
-                    .keyboardEnable(true)
                     .statusBarColor(R.color.colorPrimaryDark)
                     .navigationBarColor(R.color.colorPrimaryDark)
                     .autoDarkModeEnable(true)

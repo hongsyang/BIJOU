@@ -1,6 +1,7 @@
 package top.myhdg.bijou.view;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.webkit.WebView;
@@ -20,6 +21,9 @@ public class EnhancedWebView extends WebView implements NestedScrollingChild {
 
     private NestedScrollingChildHelper mChildHelper;
 
+    private float clickX;
+    private float clickY;
+
     public EnhancedWebView(Context context) {
         super(context);
 
@@ -38,6 +42,34 @@ public class EnhancedWebView extends WebView implements NestedScrollingChild {
         initNestedScroll();
     }
 
+    /**
+     * 获取WebView高度
+     */
+    public int getPageHeight() {
+        return computeVerticalScrollRange();
+    }
+
+    /**
+     * 获取WebView宽度
+     */
+    public int getPageWidth() {
+        return computeHorizontalScrollRange();
+    }
+
+    /**
+     * 获取点击目标X坐标
+     */
+    public float getClickX() {
+        return clickX;
+    }
+
+    /**
+     * 获取点击目标Y坐标
+     */
+    public float getClickY() {
+        return clickY;
+    }
+
     private void initNestedScroll() {
         mChildHelper = new NestedScrollingChildHelper(this);
         setNestedScrollingEnabled(true);
@@ -45,6 +77,15 @@ public class EnhancedWebView extends WebView implements NestedScrollingChild {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (event.getPointerCount() >= 2) {
+            requestDisallowInterceptTouchEvent(true);
+        } else {
+            requestDisallowInterceptTouchEvent(false);
+        }
+
+        clickX = event.getX();
+        clickY = event.getY();
+
         boolean result = false;
 
         MotionEvent trackedEvent = MotionEvent.obtain(event);

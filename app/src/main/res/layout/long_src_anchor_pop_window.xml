@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="10dp">
+
+    <TextView
+        android:id="@+id/copy_anc_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:text="@string/copy_anc"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/new_page_fore_open_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:lines="1"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:text="@string/new_page_fore_open"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/new_page_back_open_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:lines="1"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:text="@string/new_page_back_open"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="20sp" />
+
+</LinearLayout>

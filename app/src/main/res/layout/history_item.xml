@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/web_page_item"
+    android:id="@+id/history_item"
     android:layout_width="match_parent"
-    android:layout_height="50dp"
+    android:layout_height="wrap_content"
     android:layout_marginTop="10dp"
     android:layout_marginBottom="10dp"
     android:orientation="horizontal">
@@ -14,7 +14,7 @@
         android:layout_weight="1">
 
         <TextView
-            android:id="@+id/web_page_id_text"
+            android:id="@+id/history_id_text"
             android:layout_width="24dp"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
@@ -24,32 +24,43 @@
             android:textSize="22sp" />
 
         <TextView
-            android:id="@+id/web_page_title_text"
+            android:id="@+id/history_title_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            android:layout_marginStart="20dp"
-            android:layout_toEndOf="@id/web_page_id_text"
+            android:layout_marginStart="14dp"
+            android:layout_toEndOf="@id/history_id_text"
             android:lines="1"
             android:textColor="@color/colorTextPrimary"
             android:textSize="18sp"
             tools:ignore="RelativeOverlap" />
 
         <TextView
-            android:id="@+id/web_page_site_text"
+            android:id="@+id/history_site_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginStart="20dp"
-            android:layout_toEndOf="@id/web_page_id_text"
+            android:layout_below="@id/history_title_text"
+            android:layout_marginStart="14dp"
+            android:layout_toEndOf="@id/history_id_text"
             android:lines="1"
             android:textColor="@color/colorTextAuxiliary"
             android:textSize="16sp" />
 
+        <TextView
+            android:id="@+id/history_time_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/history_site_text"
+            android:layout_marginStart="14dp"
+            android:layout_toEndOf="@id/history_id_text"
+            android:lines="1"
+            android:textColor="@color/colorTextOther"
+            android:textSize="14sp" />
+
     </RelativeLayout>
 
     <Button
-        android:id="@+id/web_page_delete_button"
+        android:id="@+id/history_delete_button"
         android:layout_width="28dp"
         android:layout_height="28dp"
         android:layout_gravity="center"

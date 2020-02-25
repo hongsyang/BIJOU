@@ -18,22 +18,6 @@
 -dontwarn okio.**
 -keep class org.conscrypt.** {*;}
 
-#Gson
--keep class com.google.gson.** {*;}
--keep class com.google.** {*;}
--keep class sun.misc.Unsafe {*;}
--keep class com.google.gson.stream.** {*;}
--keep class top.myhdg.bijou.gson.** {*;}
--keepclassmembers class * implements java.io.Serializable {
-static final long serialVersionUID;
-private static final java.io.ObjectStreamField[] serialPersistentFields;
-private void writeObject(java.io.ObjectOutputStream);
-private void readObject(java.io.ObjectInputStream);
-java.lang.Object writeReplace();
-java.lang.Object readResolve();
-}
--keep public class * implements java.io.Serializable {*;}
-
 #Glide
 -keep public class * implements com.bumptech.glide.module.GlideModule
 -keep public class * extends com.bumptech.glide.module.AppGlideModule
@@ -53,3 +37,16 @@ java.lang.Object readResolve();
 -keep class com.lihang.** {*;}
 -keep class com.github.lihangleo.** {*;}
 -keep class com.github.lihangleo2.** {*;}
+
+#QRCode
+-keep class com.XuDaojie.** {*;}
+-keep class com.github.XuDaojie.** {*;}
+-keep class com.google.zxing.** {*;}
+
+#PopWindow
+-keep class com.example.zhouwei.library.** {*;}
+-keep class com.github.pinguo-zhouwei.** {*;}
+
+#PhotoView
+-keep class com.bm.photoview.** {*;}
+-keep class com.bm.library.** {*;}

@@ -9,24 +9,30 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.http.SslError;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintManager;
+import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Patterns;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -41,6 +47,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -57,7 +64,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.example.zhouwei.library.CustomPopWindow;
 import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 import com.google.android.material.snackbar.Snackbar;
 import com.gyf.immersionbar.ImmersionBar;
 import com.kyleduo.switchbutton.SwitchButton;
@@ -65,24 +74,35 @@ import com.kyleduo.switchbutton.SwitchButton;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.litepal.LitePal;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
 
+import io.github.xudaojie.qrcodelib.CaptureActivity;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 import skin.support.SkinCompatManager;
 import skin.support.design.widget.SkinMaterialCoordinatorLayout;
+import skin.support.design.widget.SkinMaterialNavigationView;
 import top.myhdg.bijou.R;
+import top.myhdg.bijou.bean.History;
 import top.myhdg.bijou.bean.Suggest;
 import top.myhdg.bijou.bean.SuggestAdapter;
 import top.myhdg.bijou.bean.WebPage;
 import top.myhdg.bijou.bean.WebPageAdapter;
+import top.myhdg.bijou.dialog.QRContentDialog;
+import top.myhdg.bijou.dialog.UAChangeDialog;
 import top.myhdg.bijou.util.HttpUtil;
 import top.myhdg.bijou.util.KeyboardUtil;
 import top.myhdg.bijou.view.EnhancedToolbar;
@@ -97,14 +117,23 @@ public class MainActivity extends BaseActivity {
     private boolean uaPC;//桌面版UA
     private boolean fullScreen;//全屏模式
 
+    private boolean isSystemChangeDarkMode = false;//是否为系统更改深色模式
+
     private long lastPressedTime = 0;//上次按下返回键时间
 
+    private RelativeLayout toolbarLayout;
     private EnhancedToolbar toolbar;//顶部工具栏
     private EditText toolbarEdit;//顶部地址栏
     private Button menuButton;//工具栏菜单按钮
     private Button goButton;//工具栏转到按钮
     private Button multipleButton;//工具栏多页面按钮
     private ProgressBar progressBar;//进度条
+
+    private RelativeLayout findLayout;
+    private Button cancelFindButton;//取消查找按钮
+    private EditText findEdit;//查找内容输入框
+    private Button findBackButton;//查找上一个按钮
+    private Button findNextButton;//查找下一个按钮
 
     private RecyclerView suggestRecyclerView;//搜索建议列表
     private ArrayList<Suggest> suggestList;//搜索建议列表
@@ -117,6 +146,7 @@ public class MainActivity extends BaseActivity {
 
     private DrawerLayout drawerLayout;
 
+    private SkinMaterialNavigationView navMenu;
     private SwitchButton darkModeSwitch;//深色模式开关
     private SwitchButton noTraceSwitch;//无痕浏览开关
     private SwitchButton uaPcSwitch;//桌面版UA开关
@@ -136,6 +166,9 @@ public class MainActivity extends BaseActivity {
     public static String htmlSource;//网页源码
     private String darkModeCSS;//深色模式CSS
 
+    private FrameLayout fullVideoLayout;//全屏播放视频布局
+    private WebChromeClient.CustomViewCallback videoCallback;
+
     private Button qrButton;//扫描二维码按钮
     private Button addButton;//添加新页面按钮
     private Button emptyButton;//清空页面按钮
@@ -145,8 +178,11 @@ public class MainActivity extends BaseActivity {
     private ArrayList<WebPage> webPageList;//多窗口列表
     private WebPageAdapter webPageAdapter;
 
+    private static final int QR_REQUEST_CODE = 1;//扫描二维码请求码
+
     private SkinMaterialCoordinatorLayout coordinatorLayout;
 
+    private FloatingActionMenu floatingActionMenu;
     private FloatingActionButton addBookmarkFab;//添加书签悬浮按钮
     private FloatingActionButton reloadFab;//重新加载悬浮按钮
     private FloatingActionButton goBackFab;//返回悬浮按钮
@@ -157,8 +193,10 @@ public class MainActivity extends BaseActivity {
     private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout webViewLayout;
 
-    private boolean enabledJavaScript = true;//JavaScript是否开启
-    private boolean enabledGeo = true;//定位权限是否开启
+    private boolean enabledJavaScript;//是否开启JavaScript
+    private boolean enabledDropReload;//是否开启下拉刷新
+
+    private int screenHeight;//屏幕长度
 
     private String homePage;//主页
     private String engine;//搜索引擎
@@ -170,14 +208,25 @@ public class MainActivity extends BaseActivity {
     private boolean customUA = false;//是否自定义UA
     private String customUserAgent;
     private static final String PC_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36 Edg/80.0.361.57";
+    private static final String DEFAULT_UA = "Mozilla/5.0 (Linux; Android 8.0; MI 6 Build/OPR1.170623.027; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/48.0.2564.116 Mobile Safari/537.36 T7/10.3 SearchCraft/2.6.3 (Baidu; P1 8.0.0)";
+
+    public CustomPopWindow longSrcAnchorPopWindow;//长按超链接弹窗
+    public CustomPopWindow longImgPopWindow;//长按图片弹窗
+    private String longClickUrl = "";//网页长按目标Url
 
     private ValueCallback<Uri> uploadMessage;
     private ValueCallback<Uri[]> uploadMessageAboveL;
     private static final int FILE_CHOOSER_RESULT_CODE = 10000;//文件上传请求码
 
+    private static final int HISTORY_RESQUEST_CODE = 2;//历史记录请求码
+
     //权限请求码
     private static final int ACCESS_COARSE_LOCATION = 0;
     private static final int ACCESS_FINE_LOCATION = 1;
+    private static final int WRITE_EXTERNAL_STORAGE_EXPORT_IMG = 2;
+    private static final int WRITE_EXTERNAL_STORAGE_SAVE_IMG = 3;
+
+    private static final String REMOVE_AD_JS = "javascript: $('.u-ad-wrap').remove();$('.home_packet').remove();$('.pbpb-item').remove();$('.m_pbpb_m0').remove();$('.experience').remove();$('#bo1').remove();";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -196,16 +245,26 @@ public class MainActivity extends BaseActivity {
         engine = prefs.getString("engine", "https://www.baidu.com/s?wd=");
         toolbarContent = prefs.getInt("toolbar_content", TITLE);
 
+        enabledJavaScript = prefs.getBoolean("java_script", true);
+        enabledDropReload = prefs.getBoolean("drop_reload", true);
         customUA = prefs.getBoolean("custom_ua", false);
         customUserAgent = prefs.getString("custom_user_agent", "");
 
+        screenHeight = this.getResources().getDisplayMetrics().heightPixels;
+
         getDarkModeCSS();
+
+        LitePal.getDatabase();
+
+        WebView.enableSlowWholeDocumentDraw();
 
         initMultiple();
 
         initMenu();
 
         initToolbar();
+
+        initFindBar();
 
         initFloatingButton();
 
@@ -229,6 +288,34 @@ public class MainActivity extends BaseActivity {
         suggestRecyclerView.setAdapter(suggestAdapter);
 
         addNewPageForeground(homePage);
+
+        String externalUrl = getIntent().getStringExtra("external_url");
+        if (externalUrl != null) {
+            openExternalUrl(getIntent().getBooleanExtra("is_file_url", false), externalUrl);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        String externalUrl = intent.getStringExtra("external_url");
+        if (externalUrl != null) {
+            openExternalUrl(intent.getBooleanExtra("is_file_url", false), externalUrl);
+        }
+    }
+
+    /**
+     * 响应外部调起
+     */
+    private void openExternalUrl(boolean isFlie, String externalUrl) {
+        if (externalUrl != null) {
+            if (isFlie) {
+                addNewPageForeground(externalUrl);
+            } else {
+                addNewPageForeground(seniorUrl(externalUrl));
+            }
+        }
     }
 
     /**
@@ -243,7 +330,9 @@ public class MainActivity extends BaseActivity {
         qrButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(MainActivity.this, CaptureActivity.class);
+                startActivityForResult(intent, QR_REQUEST_CODE);
+                drawerLayout.closeDrawers();
             }
         });
 
@@ -270,6 +359,7 @@ public class MainActivity extends BaseActivity {
      * 初始化菜单
      */
     private void initMenu() {
+        navMenu = findViewById(R.id.nav_menu);
         darkModeSwitch = findViewById(R.id.dark_mode_switch);
         noTraceSwitch = findViewById(R.id.no_trace_switch);
         uaPcSwitch = findViewById(R.id.ua_pc_switch);
@@ -289,6 +379,13 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 darkMode = isChecked;
+                if (!isSystemChangeDarkMode && prefs.getBoolean("dark_mode_follow_system", true)) {
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putBoolean("dark_mode_follow_system", false);
+                    editor.apply();
+                    showSnackBar(navMenu, "深色模式跟随系统已失效(可在设置中重新开启)");
+                }
+                isSystemChangeDarkMode = false;
                 changeDarkMode();
             }
         });
@@ -301,6 +398,11 @@ public class MainActivity extends BaseActivity {
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putBoolean("no_trace", noTrace);
                 editor.apply();
+                if (noTrace) {
+                    showSnackBar(navMenu, "无痕浏览已开启");
+                } else {
+                    showSnackBar(navMenu, "无痕浏览已关闭");
+                }
             }
         });
 
@@ -309,8 +411,12 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 uaPC = isChecked;
+                customUA = false;
+                customUserAgent = "";
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putBoolean("ua_pc", uaPC);
+                editor.putBoolean("custom_ua", false);
+                editor.putString("custom_user_agent", customUserAgent);
                 editor.apply();
                 changeUA();
             }
@@ -335,7 +441,8 @@ public class MainActivity extends BaseActivity {
         historyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                drawerLayout.closeDrawers();
+                startActivityForResult(new Intent(MainActivity.this, HistoryActivity.class), HISTORY_RESQUEST_CODE);
             }
         });
 
@@ -368,13 +475,14 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 if (layoutHome.getVisibility() == View.VISIBLE) {
-                    showSnackBar(findViewById(R.id.nav_menu), "不支持主页导出");
+                    showSnackBar(navMenu, "不支持主页导出");
                 } else {
-                    PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
-                    String jobName = getString(R.string.app_name) + " 导出网页：" + webViews.get(topPage).getTitle();
-                    PrintDocumentAdapter printAdapter = webViews.get(topPage).createPrintDocumentAdapter(jobName);
-                    assert printManager != null;
-                    printManager.print(jobName, printAdapter, new PrintAttributes.Builder().build());
+                    @SuppressLint("InflateParams") View exportView = LayoutInflater.from(MainActivity.this).inflate(R.layout.export_pop_window, null);
+                    initExportPopWindow(exportView);
+                    CustomPopWindow exportPopWindow = new CustomPopWindow.PopupWindowBuilder(MainActivity.this)
+                            .setView(exportView)
+                            .create()
+                            .showAsDropDown(exportButton, 0, -94);
                 }
             }
         });
@@ -382,7 +490,52 @@ public class MainActivity extends BaseActivity {
         uaButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                final UAChangeDialog dialog = new UAChangeDialog(MainActivity.this);
+                dialog.setData(customUserAgent, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        uaPC = false;
+                        uaPcSwitch.setChecked(false);
+                        customUA = true;
+                        customUserAgent = dialog.uaEdit.getText().toString();
+                        KeyboardUtil.closeKeyboard(MainActivity.this, dialog.uaEdit);
+                        dialog.dismiss();
+                        changeUA();
+                        showSnackBar(navMenu, "浏览器标识应用成功");
 
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putBoolean("ua_pc", uaPC);
+                        editor.putBoolean("custom_ua", customUA);
+                        editor.putString("custom_user_agent", customUserAgent);
+                        editor.apply();
+                    }
+                }, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        uaPC = false;
+                        uaPcSwitch.setChecked(false);
+                        customUA = false;
+                        customUserAgent = "";
+                        KeyboardUtil.closeKeyboard(MainActivity.this, dialog.uaEdit);
+                        dialog.dismiss();
+                        changeUA();
+                        showSnackBar(navMenu, "已恢复默认浏览器标识");
+
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putBoolean("ua_pc", uaPC);
+                        editor.putBoolean("custom_ua", customUA);
+                        editor.putString("custom_user_agent", customUserAgent);
+                        editor.apply();
+                    }
+                }, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        KeyboardUtil.closeKeyboard(MainActivity.this, dialog.uaEdit);
+                        dialog.dismiss();
+                    }
+                });
+                dialog.setCanceledOnTouchOutside(false);
+                dialog.show();
             }
         });
 
@@ -394,10 +547,10 @@ public class MainActivity extends BaseActivity {
                         Intent intent = new Intent(MainActivity.this, SourceActivity.class);
                         startActivity(intent);
                     } else {
-                        showSnackBar(findViewById(R.id.nav_menu), "暂未获取到网页源码");
+                        showSnackBar(navMenu, "暂未获取到网页源码");
                     }
                 } else {
-                    showSnackBar(findViewById(R.id.nav_menu), "暂时仅支持http网页及部分https网页查看源码");
+                    showSnackBar(navMenu, "暂时仅支持http网页及部分https网页查看源码");
                 }
             }
         });
@@ -419,20 +572,91 @@ public class MainActivity extends BaseActivity {
         oneText.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                ClipData mClipData = ClipData.newPlainText("Label", oneText.getText());
-                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                assert cm != null;
-                cm.setPrimaryClip(mClipData);
-                showSnackBar(findViewById(R.id.nav_menu), "一言已复制");
+                copyContent(oneText.getText().toString());
                 return true;
             }
         });
     }
 
     /**
+     * 初始化导出弹窗
+     */
+    private void initExportPopWindow(View exportView) {
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.picture_:
+                        if (checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE_EXPORT_IMG)) {
+                            exportPicture();
+                        }
+                        break;
+                    case R.id.pdf_:
+                        PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
+                        String jobName = "BIJOU 导出网页: " + webViews.get(topPage).getTitle();
+                        PrintDocumentAdapter printAdapter = webViews.get(topPage).createPrintDocumentAdapter(jobName);
+                        assert printManager != null;
+                        printManager.print(jobName, printAdapter, new PrintAttributes.Builder().build());
+                        break;
+                }
+            }
+        };
+        exportView.findViewById(R.id.picture_).setOnClickListener(clickListener);
+        exportView.findViewById(R.id.pdf_).setOnClickListener(clickListener);
+    }
+
+    /**
+     * 导出网页为图片
+     */
+    private void exportPicture() {
+        showSnackBar(navMenu, "网页图片将在片刻后导入系统图库");
+        final EnhancedWebView webView = webViews.get(topPage);
+        final String title = "BIJOU 导出网页: " + webView.getTitle() + ".jpg";
+        final File file = getExternalFilesDir(title);
+        assert file != null;
+        if (file.exists()) {
+            file.delete();
+        } else {
+            file.mkdir();
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                FileOutputStream fos;
+                try {
+                    fos = new FileOutputStream(file.getAbsoluteFile());
+                    Bitmap bitmap = Bitmap.createBitmap(webView.getPageWidth(), webView.getPageHeight(), Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    webView.draw(canvas);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                    if (!bitmap.isRecycled()) {
+                        bitmap.recycle();
+                        System.gc();
+                    }
+                    MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(),
+                            file.getAbsolutePath(), title, null);
+                    MainActivity.this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + file.getAbsolutePath())));// 通知图库更新
+                    file.delete();
+                    fos.flush();
+                    fos.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showSnackBar(navMenu, "网页图片导出失败，请检查存储权限");
+                        }
+                    });
+                }
+            }
+        }).start();
+    }
+
+    /**
      * 初始化顶部工具栏
      */
     private void initToolbar() {
+        toolbarLayout = findViewById(R.id.toolbar_layout);
         toolbar = findViewById(R.id.toolbar);
         toolbarEdit = findViewById(R.id.toolbar_edit);
         menuButton = toolbar.getMenuButton();
@@ -442,6 +666,7 @@ public class MainActivity extends BaseActivity {
         suggestRecyclerView = findViewById(R.id.suggest_recycler_iew);
         layoutHome = findViewById(R.id.layout_home);
         startText = findViewById(R.id.start_text);
+        fullVideoLayout = findViewById(R.id.full_video_layout);
 
         drawerLayout = findViewById(R.id.drawerLayout);
         drawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
@@ -491,10 +716,16 @@ public class MainActivity extends BaseActivity {
             }
         });
 
+        toolbarEdit.setSelectAllOnFocus(true);
         toolbarEdit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
+                    String url = webViews.get(topPage).getUrl();
+                    if (!url.equals("about:blank")) {
+                        toolbarEdit.setText(url);
+                        toolbarEdit.selectAll();
+                    }
                     KeyboardUtil.openKeyboard(MainActivity.this, toolbarEdit);
                     goButton.setVisibility(View.VISIBLE);
                     openSuggestList();
@@ -549,9 +780,93 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
+     * 初始化查找栏
+     */
+    private void initFindBar() {
+        findLayout = findViewById(R.id.find_layout);
+        cancelFindButton = findViewById(R.id.cancel_find_button);
+        findEdit = findViewById(R.id.find_edit);
+        findBackButton = findViewById(R.id.find_back_button);
+        findNextButton = findViewById(R.id.find_next_button);
+
+        findEdit.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                webViews.get(topPage).findAllAsync(findEdit.getText().toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        findEdit.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                    KeyboardUtil.closeKeyboard(MainActivity.this, findEdit);
+                    webViews.get(topPage).findNext(true);
+                }
+                return false;
+            }
+        });
+
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.cancel_find_button:
+                        closeFindLayout();
+                        break;
+                    case R.id.find_back_button:
+                        KeyboardUtil.closeKeyboard(MainActivity.this, findEdit);
+                        webViews.get(topPage).findNext(false);
+                        break;
+                    case R.id.find_next_button:
+                        KeyboardUtil.closeKeyboard(MainActivity.this, findEdit);
+                        webViews.get(topPage).findNext(true);
+                        break;
+                }
+            }
+        };
+
+        cancelFindButton.setOnClickListener(clickListener);
+        findBackButton.setOnClickListener(clickListener);
+        findNextButton.setOnClickListener(clickListener);
+    }
+
+    /**
+     * 打开查找布局
+     */
+    private void openFindLayout() {
+        toolbarLayout.setVisibility(View.GONE);
+        findLayout.setVisibility(View.VISIBLE);
+        findEdit.requestFocus();
+        KeyboardUtil.openKeyboard(this, findEdit);
+    }
+
+    /**
+     * 关闭查找布局
+     */
+    private void closeFindLayout() {
+        findLayout.setVisibility(View.GONE);
+        toolbarLayout.setVisibility(View.VISIBLE);
+        findEdit.setText("");
+        findEdit.clearFocus();
+        KeyboardUtil.closeKeyboard(this, findEdit);
+        webViews.get(topPage).clearMatches();
+    }
+
+    /**
      * 初始化悬浮按钮
      */
     private void initFloatingButton() {
+        floatingActionMenu = findViewById(R.id.floating_action_menu);
         addBookmarkFab = findViewById(R.id.fab_add_bookmark);
         reloadFab = findViewById(R.id.fab_reload);
         goBackFab = findViewById(R.id.fab_go_back);
@@ -597,11 +912,27 @@ public class MainActivity extends BaseActivity {
                 webViews.get(topPage).loadUrl(homePage);
             }
         });
+        homeFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                webViews.get(topPage).scrollTo(0, 0);
+                return true;
+            }
+        });
 
         findFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (webViews.get(topPage).getUrl().equals("about:blank")) {
+                    showSnackBar(coordinatorLayout, "BIJOU默认主页不支持网页查找内容");
+                } else {
+                    if (findLayout.getVisibility() == View.VISIBLE) {
+                        closeFindLayout();
+                    } else {
+                        openFindLayout();
+                        floatingActionMenu.close(true);
+                    }
+                }
             }
         });
     }
@@ -631,7 +962,7 @@ public class MainActivity extends BaseActivity {
      * 初始化WebView
      */
     @SuppressLint("SetJavaScriptEnabled")
-    private void initWebView(EnhancedWebView webView, String url) {
+    private void initWebView(final EnhancedWebView webView, String url) {
         WebSettings settings = webView.getSettings();
         settings.setSupportMultipleWindows(true);//支持多窗口
         settings.setJavaScriptEnabled(enabledJavaScript);
@@ -666,7 +997,8 @@ public class MainActivity extends BaseActivity {
             settings.setUserAgentString(PC_UA);
             swipeRefreshLayout.setEnabled(false);
         } else {
-            swipeRefreshLayout.setEnabled(true);
+            swipeRefreshLayout.setEnabled(enabledDropReload);
+            settings.setUserAgentString(DEFAULT_UA);
             if (customUA) {
                 settings.setUserAgentString(customUserAgent);
             }
@@ -707,10 +1039,42 @@ public class MainActivity extends BaseActivity {
                 }
                 switch (type) {
                     case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
-
+                        longClickUrl = result.getExtra();
+                        int clickAncX = (int) (webViews.get(topPage).getClickX() - 250);
+                        int clickAncY = (int) (webViews.get(topPage).getClickY() - 480);
+                        if (clickAncX < 0) {
+                            clickAncX = 50;
+                        }
+                        if (clickAncY < 0) {
+                            clickAncY = 50;
+                        }
+                        @SuppressLint("InflateParams") View longSrcAnchorView = LayoutInflater.from(MainActivity.this)
+                                .inflate(R.layout.long_src_anchor_pop_window, null);
+                        initLongSrcAnchorPopWindow(longSrcAnchorView);
+                        longSrcAnchorPopWindow = new CustomPopWindow.PopupWindowBuilder(MainActivity.this)
+                                .setView(longSrcAnchorView)
+                                .enableBackgroundDark(true)
+                                .create()
+                                .showAsDropDown(webViews.get(topPage), clickAncX, clickAncY);
                         break;
                     case WebView.HitTestResult.IMAGE_TYPE: // 图片
-
+                        longClickUrl = result.getExtra();
+                        int clickImgX = (int) (webViews.get(topPage).getClickX() - 250);
+                        int clickImgY = (int) (webViews.get(topPage).getClickY() - 700);
+                        if (clickImgX < 0) {
+                            clickImgX = 50;
+                        }
+                        if (clickImgY < 0) {
+                            clickImgY = 50;
+                        }
+                        @SuppressLint("InflateParams") View longImgView = LayoutInflater.from(MainActivity.this)
+                                .inflate(R.layout.long_img_pop_window, null);
+                        initLongImgPopWindow(longImgView);
+                        longImgPopWindow = new CustomPopWindow.PopupWindowBuilder(MainActivity.this)
+                                .setView(longImgView)
+                                .enableBackgroundDark(true)
+                                .create()
+                                .showAsDropDown(webViews.get(topPage), clickImgX, clickImgY);
                         break;
                 }
                 return true;
@@ -779,6 +1143,32 @@ public class MainActivity extends BaseActivity {
                 //获取html源码
                 view.loadUrl("javascript:window.local_obj.showSource('<head>'+" +
                         "document.getElementsByTagName('html')[0].innerHTML+'</head>');");
+
+                //全屏播放视频
+                view.loadUrl(TagUtils.getJs(url));
+
+                //移除广告
+                view.loadUrl(REMOVE_AD_JS);
+
+                //网页长度过小时，关闭下拉刷新
+                if (webView.getPageHeight() - screenHeight < 300) {
+                    swipeRefreshLayout.setEnabled(false);
+                } else {
+                    swipeRefreshLayout.setEnabled(enabledDropReload);
+                    if (uaPC) {
+                        swipeRefreshLayout.setEnabled(false);
+                    }
+                }
+
+                if (!noTrace) {
+                    if (!view.getUrl().equals(homePage)) {
+                        History history = new History();
+                        history.setTitle(view.getTitle());
+                        history.setWebsite(view.getUrl());
+                        history.setTime(getTime());
+                        history.save();
+                    }
+                }
             }
         };
         webView.setWebViewClient(webViewClient);
@@ -822,7 +1212,7 @@ public class MainActivity extends BaseActivity {
                         progressBar.setVisibility(View.VISIBLE);
                         progressBar.setProgress(newProgress);
                         //注入深色模式CSS
-                        if (darkMode) {
+                        if (newProgress > 20 && darkMode) {
                             view.loadUrl("javascript:(function() {"
                                     + "var parent = document.getElementsByTagName('head').item(0);"
                                     + "var style = document.createElement('style');"
@@ -861,15 +1251,139 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
-                checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, ACCESS_COARSE_LOCATION);
-                checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, ACCESS_FINE_LOCATION);
-                callback.invoke(origin, enabledGeo, false);//第二个参数:是否同意网站获取权限  第三个参数：是否希望内核记住
+                showActionSnackBar(coordinatorLayout, "是否授权该网站获取位置", "授权", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, ACCESS_COARSE_LOCATION)
+                                || checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, ACCESS_FINE_LOCATION)) {
+                            callback.invoke(origin, true, true);//第二个参数:是否同意网站获取权限  第三个参数：是否希望内核记住
+                        }
+                    }
+                });
+
                 super.onGeolocationPermissionsShowPrompt(origin, callback);
+            }
+
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                fullVideoLayout.setVisibility(View.VISIBLE);
+                fullVideoLayout.addView(view);
+                hideStatus();
+                videoCallback = callback;
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                super.onShowCustomView(view, callback);
+            }
+
+            @Override
+            public void onHideCustomView() {
+                if (videoCallback != null) {
+                    videoCallback.onCustomViewHidden();
+                    videoCallback = null;
+                }
+                fullVideoLayout.removeAllViews();
+                fullVideoLayout.setVisibility(View.GONE);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                changeFullScreen();
+                super.onHideCustomView();
             }
         };
         webView.setWebChromeClient(webChromeClient);
 
         webView.loadUrl(seniorUrl(url));
+    }
+
+    /**
+     * 获取系统时间
+     */
+    private String getTime() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT);
+        Date date = new Date(System.currentTimeMillis());
+        return simpleDateFormat.format(date);
+    }
+
+    /**
+     * 初始化长按超链接弹窗
+     */
+    private void initLongSrcAnchorPopWindow(View longSrcAnchorView) {
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.copy_anc_button:
+                        copyContent(longClickUrl);
+                        longSrcAnchorPopWindow.dissmiss();
+                        break;
+                    case R.id.new_page_fore_open_button:
+                        addNewPageForeground(seniorUrl(longClickUrl));
+                        longSrcAnchorPopWindow.dissmiss();
+                        break;
+                    case R.id.new_page_back_open_button:
+                        addNewPageBackstage(seniorUrl(longClickUrl));
+                        longSrcAnchorPopWindow.dissmiss();
+                        showSnackBar(coordinatorLayout, "已后台打开目标链接");
+                        break;
+                }
+            }
+        };
+        longSrcAnchorView.findViewById(R.id.copy_anc_button).setOnClickListener(clickListener);
+        longSrcAnchorView.findViewById(R.id.new_page_fore_open_button).setOnClickListener(clickListener);
+        longSrcAnchorView.findViewById(R.id.new_page_back_open_button).setOnClickListener(clickListener);
+    }
+
+    /**
+     * 初始化长按图片接弹窗
+     */
+    private void initLongImgPopWindow(View longImgView) {
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.show_img_button:
+                        Intent intent = new Intent(MainActivity.this, ImageActivity.class);
+                        intent.putExtra("url", longClickUrl);
+                        startActivity(intent);
+                        longImgPopWindow.dissmiss();
+                        break;
+                    case R.id.save_img_button:
+                        if (checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE_SAVE_IMG)) {
+                            new SaveImage().execute();
+                        }
+                        longImgPopWindow.dissmiss();
+                        break;
+                    case R.id.copy_img_url_button:
+                        copyContent(longClickUrl);
+                        longImgPopWindow.dissmiss();
+                        break;
+                    case R.id.new_img_fore_open_button:
+                        addNewPageForeground(seniorUrl(longClickUrl));
+                        longImgPopWindow.dissmiss();
+                        break;
+                    case R.id.new_img_back_open_button:
+                        addNewPageBackstage(seniorUrl(longClickUrl));
+                        longImgPopWindow.dissmiss();
+                        showSnackBar(coordinatorLayout, "已后台打开目标链接");
+                        break;
+                }
+            }
+        };
+        longImgView.findViewById(R.id.show_img_button).setOnClickListener(clickListener);
+        longImgView.findViewById(R.id.save_img_button).setOnClickListener(clickListener);
+        longImgView.findViewById(R.id.copy_img_url_button).setOnClickListener(clickListener);
+        longImgView.findViewById(R.id.new_img_fore_open_button).setOnClickListener(clickListener);
+        longImgView.findViewById(R.id.new_img_back_open_button).setOnClickListener(clickListener);
+    }
+
+    /**
+     * 复制内容
+     */
+    private void copyContent(String content) {
+        ClipData mClipData = ClipData.newPlainText("Label", content);
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        assert cm != null;
+        cm.setPrimaryClip(mClipData);
+        showSnackBar(navMenu, "内容已复制");
     }
 
     /**
@@ -893,13 +1407,11 @@ public class MainActivity extends BaseActivity {
         for (EnhancedWebView webView : webViews) {
             if (uaPC) {
                 webView.getSettings().setUserAgentString(PC_UA);
-                swipeRefreshLayout.setEnabled(false);
             } else {
-                swipeRefreshLayout.setEnabled(true);
                 if (customUA) {
                     webView.getSettings().setUserAgentString(customUserAgent);
                 } else {
-                    webView.getSettings().setUserAgentString("");
+                    webView.getSettings().setUserAgentString(DEFAULT_UA);
                 }
             }
             webView.reload();
@@ -972,7 +1484,8 @@ public class MainActivity extends BaseActivity {
         try {
             switch (toolbarContent) {
                 case TITLE:
-                    toolbarEdit.setHint(webViews.get(topPage).getTitle());
+                    String title = webViews.get(topPage).getTitle();
+                    toolbarEdit.setHint(title);
                     break;
                 case WEBSITE:
                     toolbarEdit.setHint(webViews.get(topPage).getUrl());
@@ -1102,6 +1615,8 @@ public class MainActivity extends BaseActivity {
         if (topPage >= 9) {
             showSnackBar(coordinatorLayout, "新增过多页面可能会引起系统卡顿或其他未知问题,请谨慎添加");
         }
+
+        closeFindLayout();
     }
 
     /**
@@ -1133,6 +1648,18 @@ public class MainActivity extends BaseActivity {
         webViews.get(topPage).setVisibility(View.VISIBLE);
         setToolbarContentHint();
         closeSuggestList();
+
+        //网页长度过小时，关闭下拉刷新
+        if (webViews.get(topPage).getPageHeight() - screenHeight < 100) {
+            swipeRefreshLayout.setEnabled(false);
+        } else {
+            swipeRefreshLayout.setEnabled(enabledDropReload);
+            if (uaPC) {
+                swipeRefreshLayout.setEnabled(false);
+            }
+        }
+
+        closeFindLayout();
     }
 
     /**
@@ -1181,9 +1708,26 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
+     * 销毁所有页面
+     */
+    private void destoryAllWebPage() {
+        for (EnhancedWebView webView : webViews) {
+            webViewLayout.removeView(webView);
+            webView.loadUrl("about:blank");
+            webView.stopLoading();
+            webView.clearHistory();
+            webView.setWebChromeClient(null);
+            webView.setWebViewClient(null);
+            webView.destroy();
+        }
+        webViews.clear();
+        webPageList.clear();
+    }
+
+    /**
      * 获取网页源码
      */
-    private class JavascriptInterface {
+    private static class JavascriptInterface {
         JavascriptInterface() {
         }
 
@@ -1203,7 +1747,7 @@ public class MainActivity extends BaseActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        showSnackBar(findViewById(R.id.nav_menu), "一言获取失败");
+                        showSnackBar(navMenu, "一言获取失败");
                     }
                 });
             }
@@ -1272,14 +1816,12 @@ public class MainActivity extends BaseActivity {
     private void changeStatusColor() {
         if (darkMode) {
             ImmersionBar.with(this)
-                    .keyboardEnable(true)
                     .statusBarColor(R.color.colorPrimaryDark_dark)
                     .navigationBarColor(R.color.colorPrimaryDark_dark)
                     .autoDarkModeEnable(true)
                     .init();
         } else {
             ImmersionBar.with(this)
-                    .keyboardEnable(true)
                     .statusBarColor(R.color.colorPrimaryDark)
                     .navigationBarColor(R.color.colorPrimaryDark)
                     .autoDarkModeEnable(true)
@@ -1307,18 +1849,32 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
+     * 隐藏状态栏
+     */
+    private void hideStatus() {
+        WindowManager.LayoutParams attrs = getWindow().getAttributes();
+        attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        getWindow().setAttributes(attrs);
+    }
+
+    /**
+     * 显示状态栏
+     */
+    private void showStatus() {
+        WindowManager.LayoutParams attrs = getWindow().getAttributes();
+        attrs.flags &= ~WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        getWindow().setAttributes(attrs);
+        changeStatusColor();
+    }
+
+    /**
      * 切换全屏模式
      */
     private void changeFullScreen() {
         if (fullScreen) {
-            WindowManager.LayoutParams attrs = getWindow().getAttributes();
-            attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
-            getWindow().setAttributes(attrs);
+            hideStatus();
         } else {
-            WindowManager.LayoutParams attrs = getWindow().getAttributes();
-            attrs.flags &= ~WindowManager.LayoutParams.FLAG_FULLSCREEN;
-            getWindow().setAttributes(attrs);
-            changeStatusColor();
+            showStatus();
         }
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean("full_screen", fullScreen);
@@ -1328,10 +1884,12 @@ public class MainActivity extends BaseActivity {
     /**
      * 检查权限
      */
-    private void checkPermission(String permission, int requestCode) {
+    private boolean checkPermission(String permission, int requestCode) {
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{permission}, requestCode);
+            return false;
         }
+        return true;
     }
 
     @Override
@@ -1343,18 +1901,34 @@ public class MainActivity extends BaseActivity {
                     showSnackBar(coordinatorLayout, "定位权限获取失败");
                 }
                 break;
+            case WRITE_EXTERNAL_STORAGE_EXPORT_IMG:
+                if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    showSnackBar(coordinatorLayout, "存储权限获取失败");
+                } else {
+                    exportPicture();
+                }
+                break;
+            case WRITE_EXTERNAL_STORAGE_SAVE_IMG:
+                if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    showSnackBar(coordinatorLayout, "存储权限获取失败");
+                } else {
+                    new SaveImage().execute();
+                }
+                break;
         }
-
     }
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration configuration) {
         super.onConfigurationChanged(configuration);
 
-        boolean darkModeFollowSystem = prefs.getBoolean("dark_mode_follow_system", true);
-        if (darkModeFollowSystem) {
-            darkMode = isSystemDarkMode();
-            changeDarkMode();
+        if (videoCallback == null) {
+            boolean darkModeFollowSystem = prefs.getBoolean("dark_mode_follow_system", true);
+            if (darkModeFollowSystem) {
+                darkMode = isSystemDarkMode();
+                isSystemChangeDarkMode = true;
+                changeDarkMode();
+            }
         }
     }
 
@@ -1363,30 +1937,34 @@ public class MainActivity extends BaseActivity {
         if (drawerLayout.isDrawerOpen(GravityCompat.START) || drawerLayout.isDrawerOpen(GravityCompat.END)) {
             drawerLayout.closeDrawers();
         } else {
-            if (suggestRecyclerView.getVisibility() == View.VISIBLE) {
-                toolbarEdit.clearFocus();
-                closeSuggestList();
+            if (fullVideoLayout.getVisibility() == View.VISIBLE) {
+                return;
             } else {
-                if (toolbarEdit.hasFocus()) {
+                if (suggestRecyclerView.getVisibility() == View.VISIBLE) {
                     toolbarEdit.clearFocus();
+                    closeSuggestList();
                 } else {
-                    if (webViews.get(topPage).canGoBack()) {
-                        webViews.get(topPage).goBack();
+                    if (toolbarEdit.hasFocus()) {
+                        toolbarEdit.clearFocus();
                     } else {
-                        if (topPage >= 1) {
-                            showActionSnackBar(coordinatorLayout, "是否关闭当前窗口", "关闭", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    deleteWebPage(topPage);
-                                }
-                            });
+                        if (webViews.get(topPage).canGoBack()) {
+                            webViews.get(topPage).goBack();
                         } else {
-                            long nowTime = System.currentTimeMillis();
-                            if ((nowTime - lastPressedTime) > 1800) {
-                                showSnackBar(coordinatorLayout, "重复操作将退出BIJOU");
-                                lastPressedTime = nowTime;
+                            if (topPage >= 1) {
+                                showActionSnackBar(coordinatorLayout, "是否关闭当前窗口", "关闭", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        deleteWebPage(topPage);
+                                    }
+                                });
                             } else {
-                                ActivityCollector.finishAll();
+                                long nowTime = System.currentTimeMillis();
+                                if ((nowTime - lastPressedTime) > 1800) {
+                                    showSnackBar(coordinatorLayout, "重复操作将退出BIJOU");
+                                    lastPressedTime = nowTime;
+                                } else {
+                                    ActivityCollector.finishAll();
+                                }
                             }
                         }
                     }
@@ -1399,44 +1977,205 @@ public class MainActivity extends BaseActivity {
      * 文件上传
      */
     private void onActivityResultAboveL(int requestCode, int resultCode, Intent intent) {
-        if (requestCode != FILE_CHOOSER_RESULT_CODE || uploadMessageAboveL == null)
-            return;
-        Uri[] results = null;
-        if (resultCode == Activity.RESULT_OK) {
-            if (intent != null) {
-                String dataString = intent.getDataString();
-                ClipData clipData = intent.getClipData();
-                if (clipData != null) {
-                    results = new Uri[clipData.getItemCount()];
-                    for (int i = 0; i < clipData.getItemCount(); i++) {
-                        ClipData.Item item = clipData.getItemAt(i);
-                        results[i] = item.getUri();
+        switch (requestCode) {
+            case FILE_CHOOSER_RESULT_CODE:
+                if (resultCode == Activity.RESULT_OK && uploadMessageAboveL != null) {
+                    Uri[] results = null;
+                    if (intent != null) {
+                        String dataString = intent.getDataString();
+                        ClipData clipData = intent.getClipData();
+                        if (clipData != null) {
+                            results = new Uri[clipData.getItemCount()];
+                            for (int i = 0; i < clipData.getItemCount(); i++) {
+                                ClipData.Item item = clipData.getItemAt(i);
+                                results[i] = item.getUri();
+                            }
+                        }
+                        if (dataString != null)
+                            results = new Uri[]{Uri.parse(dataString)};
                     }
+                    uploadMessageAboveL.onReceiveValue(results);
+                    uploadMessageAboveL = null;
                 }
-                if (dataString != null)
-                    results = new Uri[]{Uri.parse(dataString)};
-            }
+                break;
         }
-
-        uploadMessageAboveL.onReceiveValue(results);
-
-        uploadMessageAboveL = null;
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == FILE_CHOOSER_RESULT_CODE) {
-            if (uploadMessage == null && uploadMessageAboveL == null) return;
-            Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
-            if (uploadMessageAboveL != null) {
-                onActivityResultAboveL(requestCode, resultCode, data);
-            } else if (uploadMessage != null) {
-                uploadMessage.onReceiveValue(result);
-                uploadMessage = null;
-            }
+        switch (requestCode) {
+            case FILE_CHOOSER_RESULT_CODE:
+                if (uploadMessage == null && uploadMessageAboveL == null) return;
+                Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
+                if (uploadMessageAboveL != null) {
+                    onActivityResultAboveL(requestCode, resultCode, data);
+                } else if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(result);
+                    uploadMessage = null;
+                }
+                break;
+            case QR_REQUEST_CODE:
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    String qrResult = data.getStringExtra("result");
+                    final QRContentDialog dialog = new QRContentDialog(this);
+                    dialog.setData(qrResult, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            copyContent(dialog.qrContentEdit.getText().toString());
+                            KeyboardUtil.closeKeyboard(MainActivity.this, dialog.qrContentEdit);
+                        }
+                    }, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            webViews.get(topPage).loadUrl(seniorUrl(dialog.qrContentEdit.getText().toString()));
+                            KeyboardUtil.closeKeyboard(MainActivity.this, dialog.qrContentEdit);
+                            dialog.dismiss();
+                        }
+                    }, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            addNewPageForeground(seniorUrl(dialog.qrContentEdit.getText().toString()));
+                            KeyboardUtil.closeKeyboard(MainActivity.this, dialog.qrContentEdit);
+                            dialog.dismiss();
+                        }
+                    }, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            addNewPageBackstage(seniorUrl(dialog.qrContentEdit.getText().toString()));
+                            KeyboardUtil.closeKeyboard(MainActivity.this, dialog.qrContentEdit);
+                            dialog.dismiss();
+                            showSnackBar(coordinatorLayout, "已后台打开");
+                        }
+                    }, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            KeyboardUtil.closeKeyboard(MainActivity.this, dialog.qrContentEdit);
+                            dialog.dismiss();
+                        }
+                    });
+                    dialog.setCanceledOnTouchOutside(false);
+                    dialog.show();
+                } else {
+                    showSnackBar(coordinatorLayout, "未识别到内容");
+                }
+                break;
+            case HISTORY_RESQUEST_CODE:
+                if (resultCode == Activity.RESULT_FIRST_USER && data != null) {
+                    addNewPageForeground(seniorUrl(data.getStringExtra("url")));
+                }
+                break;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        for (EnhancedWebView webView : webViews) {
+            webView.onPause();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        for (EnhancedWebView webView : webViews) {
+            webView.onResume();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        destoryAllWebPage();
+        super.onDestroy();
+    }
+
+    /**
+     * 保存网页图片
+     */
+    @SuppressLint("StaticFieldLeak")
+    private class SaveImage extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            String result;
+            try {
+                int idx = longClickUrl.lastIndexOf(".");
+                String ext = longClickUrl.substring(idx);
+                final String image = new Date().getTime() + ext + ".jpg";
+                final File file = getExternalFilesDir(image);
+                assert file != null;
+                if (file.exists()) {
+                    file.delete();
+                } else {
+                    file.mkdir();
+                }
+                InputStream inputStream = null;
+                URL url = new URL(longClickUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(20000);
+                if (conn.getResponseCode() == 200) {
+                    inputStream = conn.getInputStream();
+                }
+                byte[] buffer = new byte[4096];
+                int len;
+                FileOutputStream outStream = new FileOutputStream(file);
+                assert inputStream != null;
+                while ((len = inputStream.read(buffer)) != -1) {
+                    outStream.write(buffer, 0, len);
+                }
+                MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(),
+                        file.getAbsolutePath(), image, null);
+                MainActivity.this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + file.getAbsolutePath())));
+                file.delete();
+                outStream.flush();
+                outStream.close();
+                result = "图片将在片刻后保存至系统图库";
+            } catch (Exception e) {
+                result = "保存失败" + e.getLocalizedMessage();
+            }
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(final String result) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showSnackBar(coordinatorLayout, result);
+                }
+            });
+        }
+    }
+
+    private static class TagUtils {
+
+        private static String getTagByUrl(String url) {
+            if (url.contains("qq")) {
+                return "tvp_fullscreen_button";
+            } else if (url.contains("youku")) {
+                return "x-zoomin";
+            } else if (url.contains("bilibili")) {
+                return "icon-widescreen";
+            } else if (url.contains("acfun")) {
+                return "controller-btn-fullscreen";
+            } else if (url.contains("le")) {
+                return "hv_ico_screen";
+            }
+            return "";
+        }
+
+        static String getJs(String url) {
+            String tag = getTagByUrl(url);
+            if (TextUtils.isEmpty(tag)) {
+                return "javascript:";
+            } else {
+                return "javascript:document.getElementsByClassName('"
+                        + tag + "')[frontPage].addEventListener('click',function(){onClick.fullVedio();return false;});";
+            }
+        }
+    }
+
 
 }

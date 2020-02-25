@@ -30,60 +30,128 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                    <Button
-                        android:id="@+id/menu_button"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="20dp"
-                        android:background="@drawable/menu" />
-
-                    <EditText
-                        android:id="@+id/toolbar_edit"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="20dp"
-                        android:layout_toEndOf="@id/menu_button"
-                        android:background="@color/colorTransparent"
-                        android:hint="@string/search_hint"
-                        android:inputType="text"
-                        android:lines="1"
-                        android:maxWidth="210dp"
-                        android:minWidth="150dp"
-                        android:textColor="@color/colorTextPrimary"
-                        android:textColorHint="@color/colorTextOther"
-                        android:textSize="20sp"
-                        tools:ignore="Autofill,RelativeOverlap" />
-
-                    <Button
-                        android:id="@+id/go_button"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_centerVertical="true"
-                        android:layout_marginEnd="20dp"
-                        android:layout_toStartOf="@id/multiple_button"
-                        android:background="@drawable/forward"
-                        android:visibility="gone" />
-
-                    <Button
-                        android:id="@+id/multiple_button"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:layout_marginEnd="20dp"
-                        android:background="@drawable/multiple" />
-
-                    <ProgressBar
-                        android:id="@+id/progress_bar"
-                        style="?android:attr/progressBarStyleHorizontal"
+                    <RelativeLayout
+                        android:id="@+id/toolbar_layout"
                         android:layout_width="match_parent"
-                        android:layout_height="5dp"
-                        android:layout_alignParentBottom="true"
-                        android:max="100"
-                        android:progressDrawable="@drawable/progress_bar" />
+                        android:layout_height="match_parent"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentTop="true"
+                        android:visibility="visible">
+
+                        <Button
+                            android:id="@+id/menu_button"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="20dp"
+                            android:background="@drawable/menu" />
+
+                        <EditText
+                            android:id="@+id/toolbar_edit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="20dp"
+                            android:layout_toEndOf="@id/menu_button"
+                            android:background="@color/colorTransparent"
+                            android:hint="@string/search_hint"
+                            android:imeOptions="actionGo"
+                            android:inputType="text"
+                            android:lines="1"
+                            android:maxWidth="210dp"
+                            android:minWidth="150dp"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textColorHint="@color/colorTextOther"
+                            android:textSize="18sp"
+                            tools:ignore="Autofill,RelativeOverlap" />
+
+                        <Button
+                            android:id="@+id/go_button"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="20dp"
+                            android:layout_toStartOf="@id/multiple_button"
+                            android:background="@drawable/forward"
+                            android:visibility="gone" />
+
+                        <Button
+                            android:id="@+id/multiple_button"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="20dp"
+                            android:background="@drawable/multiple" />
+
+                        <ProgressBar
+                            android:id="@+id/progress_bar"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="5dp"
+                            android:layout_alignParentBottom="true"
+                            android:max="100"
+                            android:progressDrawable="@drawable/progress_bar" />
+
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/find_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentTop="true"
+                        android:background="@color/colorWindowBackground"
+                        android:visibility="gone">
+
+                        <Button
+                            android:id="@+id/cancel_find_button"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="20dp"
+                            android:background="@drawable/delete" />
+
+                        <EditText
+                            android:id="@+id/find_edit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="20dp"
+                            android:layout_toEndOf="@id/cancel_find_button"
+                            android:background="@color/colorTransparent"
+                            android:hint="@string/find_hint"
+                            android:imeOptions="actionSearch"
+                            android:inputType="text"
+                            android:lines="1"
+                            android:maxWidth="210dp"
+                            android:minWidth="150dp"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textColorHint="@color/colorTextOther"
+                            android:textSize="18sp"
+                            tools:ignore="Autofill,RelativeOverlap" />
+
+                        <Button
+                            android:id="@+id/find_back_button"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="20dp"
+                            android:layout_toStartOf="@id/find_next_button"
+                            android:background="@drawable/back" />
+
+                        <Button
+                            android:id="@+id/find_next_button"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="20dp"
+                            android:background="@drawable/forward" />
+
+                    </RelativeLayout>
 
                 </RelativeLayout>
 
@@ -133,7 +201,7 @@
                     app:hl_cornerRadius="22dp"
                     app:hl_shadowBackColor="@color/colorPrimary"
                     app:hl_shadowColor="@color/colorTextPrimary"
-                    app:hl_shadowLimit="6dp">
+                    app:hl_shadowLimit="5dp">
 
                     <TextView
                         android:id="@+id/start_text"
@@ -170,11 +238,13 @@
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <com.github.clans.fab.FloatingActionMenu
+            android:id="@+id/floating_action_menu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="30dp"
             android:layout_marginBottom="48dp"
+            app:layout_behavior=".view.ScrollAwareFabMenuBehavior"
             app:menu_colorNormal="@color/colorAccent"
             app:menu_colorPressed="@color/colorAccent"
             app:menu_icon="@drawable/fab_add">
@@ -236,6 +306,13 @@
         </com.github.clans.fab.FloatingActionMenu>
 
     </skin.support.design.widget.SkinMaterialCoordinatorLayout>
+
+    <FrameLayout
+        android:id="@+id/full_video_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#121212"
+        android:visibility="gone" />
 
     <skin.support.design.widget.SkinMaterialNavigationView
         android:id="@+id/nav_menu"

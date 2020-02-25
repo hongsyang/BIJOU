@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -25,7 +26,7 @@ public class WebPageAdapter extends RecyclerView.Adapter<WebPageAdapter.ViewHold
         TextView webPageTitleText;
         TextView webPageSiteText;
         Button deleteWebPageButton;
-        RelativeLayout webPageItem;
+        LinearLayout webPageItem;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);

@@ -12,7 +12,7 @@
         <item name="android:windowIsTranslucent">true</item>
     </style>
 
-    <style name="ProgressDialog" parent="Theme.AppCompat.DayNight.Dialog">
+    <style name="Dialog" parent="Theme.AppCompat.DayNight.Dialog">
         <!--背景颜色及和透明程度-->
         <item name="android:windowBackground">@android:color/transparent</item>
         <!--是否去除标题 -->

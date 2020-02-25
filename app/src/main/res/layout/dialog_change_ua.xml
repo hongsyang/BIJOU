@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/browser_ua"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="22sp" />
+
+    <EditText
+        android:id="@+id/ua_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="@color/colorTransparent"
+        android:hint="@string/custom_ua"
+        android:importantForAutofill="no"
+        android:inputType="textMultiLine"
+        android:minWidth="300dp"
+        android:minHeight="64dp"
+        android:textColor="@color/colorTextAuxiliary"
+        android:textColorHint="@color/colorTextOther"
+        android:textSize="16sp"
+        tools:ignore="LabelFor" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/built_in_ua"
+        android:textColor="@color/colorTextAuxiliary"
+        android:textSize="16sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/kua_ua_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lines="1"
+            android:text="@string/kua_ua"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/simple_ua_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lines="1"
+            android:text="@string/simple_ua"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/we_ua_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lines="1"
+            android:text="@string/we_ua"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/ie_ua_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lines="1"
+            android:text="@string/ie_ua"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/symbian_ua_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lines="1"
+            android:text="@string/symbain_ua"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/apply_ua_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:lines="1"
+            android:text="@string/apply"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/reset_ua_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:lines="1"
+            android:text="@string/reset"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/dismiss_change_ua_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:lines="1"
+            android:text="@string/cancel"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

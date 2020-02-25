@@ -8,6 +8,8 @@ import android.os.Handler;
 
 import com.gyf.immersionbar.ImmersionBar;
 
+import java.util.Objects;
+
 import skin.support.SkinCompatManager;
 import top.myhdg.bijou.R;
 
@@ -49,10 +51,34 @@ public class WelcomeActivity extends BaseActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
-                WelcomeActivity.this.finish();
+                openExternalUrl(getIntent());
             }
         }, time);
+    }
+
+    /**
+     * 响应外部调起
+     */
+    private void openExternalUrl(Intent intent) {
+        Intent i = new Intent(WelcomeActivity.this, MainActivity.class);
+        if (intent.getDataString() != null) {
+            boolean isFileUrl = false;
+            String externalUrl = null;
+            try {
+                if (Objects.equals(intent.getScheme(), "file")) {
+                    isFileUrl = true;
+                    externalUrl = "file:" + Objects.requireNonNull(intent.getData()).getPath();
+                } else {
+                    externalUrl = intent.getDataString();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            i.putExtra("is_file_url", isFileUrl);
+            i.putExtra("external_url", externalUrl);
+        }
+        startActivity(i);
+        WelcomeActivity.this.finish();
     }
 
     /**
@@ -69,14 +95,12 @@ public class WelcomeActivity extends BaseActivity {
     private void changeStatusColor() {
         if (darkMode) {
             ImmersionBar.with(this)
-                    .keyboardEnable(true)
                     .statusBarColor(R.color.colorPrimaryDark_dark)
                     .navigationBarColor(R.color.colorPrimaryDark_dark)
                     .autoDarkModeEnable(true)
                     .init();
         } else {
             ImmersionBar.with(this)
-                    .keyboardEnable(true)
                     .statusBarColor(R.color.colorPrimaryDark)
                     .navigationBarColor(R.color.colorPrimaryDark)
                     .autoDarkModeEnable(true)
