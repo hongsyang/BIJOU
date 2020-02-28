@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="10dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                android:gravity="start|center_vertical"
+                android:text="@string/baidu"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="20sp" />
+
+            <com.kyleduo.switchbutton.SwitchButton
+                android:id="@+id/baidu_engine_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginStart="20dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                android:gravity="start|center_vertical"
+                android:text="@string/bing"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="20sp" />
+
+            <com.kyleduo.switchbutton.SwitchButton
+                android:id="@+id/bing_engine_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                android:gravity="start|center_vertical"
+                android:text="@string/sm"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="20sp" />
+
+            <com.kyleduo.switchbutton.SwitchButton
+                android:id="@+id/sm_engine_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginStart="20dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                android:gravity="start|center_vertical"
+                android:text="@string/google"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="20sp" />
+
+            <com.kyleduo.switchbutton.SwitchButton
+                android:id="@+id/google_engine_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:gravity="start|center_vertical"
+            android:text="@string/custom"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="20sp" />
+
+        <com.kyleduo.switchbutton.SwitchButton
+            android:id="@+id/custom_engine_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp" />
+
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/input_engine_edit"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@color/colorTransparent"
+        android:gravity="start|center_vertical"
+        android:hint="@string/input_engine"
+        android:importantForAutofill="no"
+        android:inputType="textWebEditText"
+        android:lines="1"
+        android:textColor="@color/colorTextAuxiliary"
+        android:textColorHint="@color/colorTextOther"
+        android:textSize="16sp"
+        tools:ignore="LabelFor" />
+
+</LinearLayout>

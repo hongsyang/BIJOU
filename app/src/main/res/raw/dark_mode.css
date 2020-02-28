@@ -1,4 +1,4 @@
-/*所有元素的背景色都设置为黑夜模式*/
+/*所有元素的背景色都设置为深色模式*/
 *, *:before, *:after {
     box-sizing: inherit;
     background-color: rgba(12, 12, 12, 0.8) !important;
@@ -7,11 +7,10 @@
 /*背景颜色和一般字体颜色*/
 /*去掉文本的阴影效果*/
 div,h1,h2,h3,h4,h5,h6,p,body,em,html,link,textarea,form,select,input,span,button,em,menu,aside,table,tr,td,nav,dl,dt,dd,amp-iframe,main{
-    background-color: rgba(12, 12, 12, 0.8) !important;
-    color: #dddddd!important;
+    background-color: rgba(12, 12, 12, 0.6) !important;
+    color: #bbb !important;
     border-color: #121212 !important;
     text-shadow: 0 0 0 #000 !important;
-    background-image:none !important;
 }
 
 /*超链接*/
@@ -23,7 +22,7 @@ strong {
 	display: block;
 }
 
-img, video, iframe, canvas, svg,amp-social-share,
+img, video, iframe, canvas, svg, amp-social-share,
 embed[type='application/x-shockwave-flash'],
 object[type='application/x-shockwave-flash'],
 *[style*='url('] {

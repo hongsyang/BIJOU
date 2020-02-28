@@ -17,7 +17,7 @@
 
     <EditText
         android:id="@+id/qr_content_edit"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="10dp"
@@ -27,7 +27,7 @@
         android:minWidth="300dp"
         android:minHeight="44dp"
         android:textColor="@color/colorTextAuxiliary"
-        android:textSize="16sp"
+        android:textSize="20sp"
         tools:ignore="LabelFor" />
 
     <TextView
@@ -36,7 +36,7 @@
         android:gravity="center"
         android:text="@string/search_open"
         android:textColor="@color/colorTextAuxiliary"
-        android:textSize="16sp" />
+        android:textSize="18sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -53,7 +53,7 @@
             android:lines="1"
             android:text="@string/new_page_fore"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <TextView
             android:id="@+id/current_page_button"
@@ -64,7 +64,7 @@
             android:lines="1"
             android:text="@string/current_page"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <TextView
             android:id="@+id/new_page_back_button"
@@ -75,18 +75,18 @@
             android:lines="1"
             android:text="@string/new_page_back"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="20dp"
         android:gravity="center"
         android:text="@string/copy_cancel"
         android:textColor="@color/colorTextAuxiliary"
-        android:textSize="16sp" />
+        android:textSize="18sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -103,7 +103,7 @@
             android:lines="1"
             android:text="@string/copy"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <TextView
             android:id="@+id/dismiss_qr_content_button"
@@ -114,7 +114,7 @@
             android:lines="1"
             android:text="@string/dismiss_qr_content_dialog"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
     </LinearLayout>
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <skin.support.design.widget.SkinMaterialCoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bookmark_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorWindowBackground"
@@ -13,7 +14,7 @@
         android:paddingEnd="20dp">
 
         <Button
-            android:id="@+id/exit_history_button"
+            android:id="@+id/exit_bookmark_button"
             android:layout_width="26dp"
             android:layout_height="26dp"
             android:layout_alignParentStart="true"
@@ -24,26 +25,26 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="@string/history_"
+            android:text="@string/bookmark"
             android:textColor="@color/colorTextPrimary"
             android:textSize="22sp" />
 
     </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/history_recycler_view"
+        android:id="@+id/bookmark_recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="?attr/actionBarSize" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_empty"
+        android:id="@+id/fab_add_bookmark_"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="30dp"
-        android:layout_marginBottom="48dp"
-        android:src="@drawable/empty_dark"
+        android:layout_marginBottom="52dp"
+        android:src="@drawable/fab_add_bookmark_"
         app:layout_behavior=".view.ScrollAwareFabBehavior" />
 
 </skin.support.design.widget.SkinMaterialCoordinatorLayout>

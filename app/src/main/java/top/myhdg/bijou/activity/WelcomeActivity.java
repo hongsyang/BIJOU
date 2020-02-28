@@ -46,7 +46,7 @@ public class WelcomeActivity extends BaseActivity {
         editor.putBoolean("dark_mode", darkMode);
         editor.apply();
 
-        int time = 1000;
+        int time = 500;
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
@@ -106,6 +106,11 @@ public class WelcomeActivity extends BaseActivity {
                     .autoDarkModeEnable(true)
                     .init();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+
     }
 
 }

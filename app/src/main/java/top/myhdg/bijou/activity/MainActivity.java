@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
@@ -31,6 +32,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Patterns;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -60,6 +62,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -84,7 +88,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -96,7 +102,11 @@ import skin.support.SkinCompatManager;
 import skin.support.design.widget.SkinMaterialCoordinatorLayout;
 import skin.support.design.widget.SkinMaterialNavigationView;
 import top.myhdg.bijou.R;
+import top.myhdg.bijou.bean.Bookmark;
 import top.myhdg.bijou.bean.History;
+import top.myhdg.bijou.bean.HomeQuick;
+import top.myhdg.bijou.bean.HomeQuickAdapter;
+import top.myhdg.bijou.bean.HomeQuickItem;
 import top.myhdg.bijou.bean.Suggest;
 import top.myhdg.bijou.bean.SuggestAdapter;
 import top.myhdg.bijou.bean.WebPage;
@@ -116,8 +126,6 @@ public class MainActivity extends BaseActivity {
     private boolean noTrace;//无痕浏览
     private boolean uaPC;//桌面版UA
     private boolean fullScreen;//全屏模式
-
-    private boolean isSystemChangeDarkMode = false;//是否为系统更改深色模式
 
     private long lastPressedTime = 0;//上次按下返回键时间
 
@@ -143,6 +151,17 @@ public class MainActivity extends BaseActivity {
 
     private NestedScrollView layoutHome;//主页
     private TextView startText;//主页搜索框
+    private RecyclerView homeQuickRecylerView;//主页快捷方式
+    public static List<HomeQuick> homeQuicks;
+    private List<HomeQuickItem> homeQuickList;
+    private HomeQuickAdapter homeQuickAdapter;
+    private String homeQuickUrl;
+    private long homeQuickLastTime = 0;//上次点击主页快捷方式时间
+    private long homeQuickCurTime = 0;//当前点击主页快捷方式时间
+    private CustomPopWindow editHomeQuickPopWindow;
+    private HomeQuick editHomeQuick;
+    @SuppressLint("HandlerLeak")
+    private Handler handler;
 
     private DrawerLayout drawerLayout;
 
@@ -190,11 +209,20 @@ public class MainActivity extends BaseActivity {
     private FloatingActionButton homeFab;//主页悬浮按钮
     private FloatingActionButton findFab;//查找悬浮按钮
 
+    private CustomPopWindow addBookmarkPopWindow;//添加书签弹窗
+
     private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout webViewLayout;
 
     private boolean enabledJavaScript;//是否开启JavaScript
     private boolean enabledDropReload;//是否开启下拉刷新
+    private boolean enabledKeyCtrl;//是否开启音量键翻页
+    private boolean enabledRecovery;//是否开启启动时恢复页面
+    private boolean clearCacheExit;//退出时清理缓存
+    private boolean clearFormDataExit;//退出时清理表单数据
+    private boolean clearHistoryExit;//退出时清理历史记录
+
+    private int recoveryNum;//恢复页数量
 
     private int screenHeight;//屏幕长度
 
@@ -208,7 +236,7 @@ public class MainActivity extends BaseActivity {
     private boolean customUA = false;//是否自定义UA
     private String customUserAgent;
     private static final String PC_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36 Edg/80.0.361.57";
-    private static final String DEFAULT_UA = "Mozilla/5.0 (Linux; Android 8.0; MI 6 Build/OPR1.170623.027; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/48.0.2564.116 Mobile Safari/537.36 T7/10.3 SearchCraft/2.6.3 (Baidu; P1 8.0.0)";
+    private static final String DEFAULT_UA = "";
 
     public CustomPopWindow longSrcAnchorPopWindow;//长按超链接弹窗
     public CustomPopWindow longImgPopWindow;//长按图片弹窗
@@ -219,6 +247,8 @@ public class MainActivity extends BaseActivity {
     private static final int FILE_CHOOSER_RESULT_CODE = 10000;//文件上传请求码
 
     private static final int HISTORY_RESQUEST_CODE = 2;//历史记录请求码
+    private static final int BOOKMARK_RESQUEST_CODE = 3;//书签请求码
+    private static final int SETTINGS_RESQUEST_CODE = 4;//设置请求码
 
     //权限请求码
     private static final int ACCESS_COARSE_LOCATION = 0;
@@ -226,7 +256,12 @@ public class MainActivity extends BaseActivity {
     private static final int WRITE_EXTERNAL_STORAGE_EXPORT_IMG = 2;
     private static final int WRITE_EXTERNAL_STORAGE_SAVE_IMG = 3;
 
-    private static final String REMOVE_AD_JS = "javascript: $('.u-ad-wrap').remove();$('.home_packet').remove();$('.pbpb-item').remove();$('.m_pbpb_m0').remove();$('.experience').remove();$('#bo1').remove();";
+    private static final String REMOVE_AD_JS = "javascript: $('.u-ad-wrap')" +
+            ".remove();$('.home_packet').remove();$('.pbpb-item').remove();$('.m_pbpb_m0')" +
+            ".remove();$('.experience').remove();$('#bo1').remove();";
+
+    //深色模式例外网站
+    private static final String[] DARKMODE_EXCEPT = {"music.163.com/m/song", "d1.music.126.net/dmusic"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -247,8 +282,14 @@ public class MainActivity extends BaseActivity {
 
         enabledJavaScript = prefs.getBoolean("java_script", true);
         enabledDropReload = prefs.getBoolean("drop_reload", true);
+        enabledKeyCtrl = prefs.getBoolean("key_ctrl", false);
+        enabledRecovery = prefs.getBoolean("recovery", false);
+        recoveryNum = prefs.getInt("recovery_num", 0);
         customUA = prefs.getBoolean("custom_ua", false);
         customUserAgent = prefs.getString("custom_user_agent", "");
+        clearCacheExit = prefs.getBoolean("clear_cache_exit", false);
+        clearFormDataExit = prefs.getBoolean("clear_form_data_exit", false);
+        clearHistoryExit = prefs.getBoolean("clear_history_exit", false);
 
         screenHeight = this.getResources().getDisplayMetrics().heightPixels;
 
@@ -287,7 +328,11 @@ public class MainActivity extends BaseActivity {
         suggestAdapter = new SuggestAdapter(suggestList);
         suggestRecyclerView.setAdapter(suggestAdapter);
 
-        addNewPageForeground(homePage);
+        if (enabledRecovery && recoveryNum > 0 && !prefs.getString("recovery_page_0", "about:blank").equals(homePage)) {
+            openRecoveryPage();
+        } else {
+            addNewPageForeground(homePage);
+        }
 
         String externalUrl = getIntent().getStringExtra("external_url");
         if (externalUrl != null) {
@@ -302,6 +347,20 @@ public class MainActivity extends BaseActivity {
         String externalUrl = intent.getStringExtra("external_url");
         if (externalUrl != null) {
             openExternalUrl(intent.getBooleanExtra("is_file_url", false), externalUrl);
+        }
+    }
+
+    /**
+     * 恢复页面
+     */
+    private void openRecoveryPage() {
+        for (int i = 0; i < recoveryNum; i++) {
+            String recoveryPage = "recovery_page_" + i;
+            String recoveryUrl = prefs.getString(recoveryPage, "about:blank");
+            if (!recoveryUrl.equals(homePage)) {
+                addNewPageForeground(seniorUrl(recoveryUrl));
+            }
+            prefs.edit().remove(recoveryPage).apply();
         }
     }
 
@@ -347,8 +406,13 @@ public class MainActivity extends BaseActivity {
         emptyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                deleteAllWebPage();
-                drawerLayout.closeDrawers();
+                showActionSnackBar(findViewById(R.id.nav_multiple), "确定清空所有窗口吗？(此操作不可逆)", "清空", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        deleteAllWebPage();
+                        drawerLayout.closeDrawers();
+                    }
+                });
             }
         });
 
@@ -375,17 +439,21 @@ public class MainActivity extends BaseActivity {
         oneText = findViewById(R.id.one_text);
 
         darkModeSwitch.setChecked(darkMode);
-        darkModeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        darkModeSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                darkMode = isChecked;
-                if (!isSystemChangeDarkMode && prefs.getBoolean("dark_mode_follow_system", true)) {
+            public void onClick(View v) {
+                if (prefs.getBoolean("dark_mode_follow_system", true)) {
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putBoolean("dark_mode_follow_system", false);
                     editor.apply();
                     showSnackBar(navMenu, "深色模式跟随系统已失效(可在设置中重新开启)");
                 }
-                isSystemChangeDarkMode = false;
+            }
+        });
+        darkModeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                darkMode = isChecked;
                 changeDarkMode();
             }
         });
@@ -434,15 +502,16 @@ public class MainActivity extends BaseActivity {
         bookmarkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                startActivityForResult(new Intent(MainActivity.this, BookmarkActivity.class), BOOKMARK_RESQUEST_CODE);
+                drawerLayout.closeDrawers();
             }
         });
 
         historyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawerLayout.closeDrawers();
                 startActivityForResult(new Intent(MainActivity.this, HistoryActivity.class), HISTORY_RESQUEST_CODE);
+                drawerLayout.closeDrawers();
             }
         });
 
@@ -558,7 +627,8 @@ public class MainActivity extends BaseActivity {
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                startActivityForResult(new Intent(MainActivity.this, SettingsActivity.class), SETTINGS_RESQUEST_CODE);
+                drawerLayout.closeDrawers();
             }
         });
 
@@ -667,6 +737,7 @@ public class MainActivity extends BaseActivity {
         layoutHome = findViewById(R.id.layout_home);
         startText = findViewById(R.id.start_text);
         fullVideoLayout = findViewById(R.id.full_video_layout);
+        homeQuickRecylerView = findViewById(R.id.home_quick_recyler_view);
 
         drawerLayout = findViewById(R.id.drawerLayout);
         drawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
@@ -777,6 +848,142 @@ public class MainActivity extends BaseActivity {
                 toolbarEdit.requestFocus();
             }
         });
+
+        homeQuickRecylerView.setLayoutManager(new GridLayoutManager(this, 5));
+        homeQuickList = new ArrayList<>();
+        homeQuicks = LitePal.findAll(HomeQuick.class);
+        homeQuickAdapter = new HomeQuickAdapter(homeQuickList);
+        homeQuickRecylerView.setAdapter(homeQuickAdapter);
+        syncHomeQuickList();
+
+        ItemTouchHelper helper = new ItemTouchHelper(new DragHomeQuickItemCallback(homeQuickAdapter));
+        helper.attachToRecyclerView(homeQuickRecylerView);
+
+        handler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(@NonNull Message msg) {
+                switch (msg.what) {
+                    case 1:
+                        webViews.get(topPage).loadUrl(seniorUrl(homeQuickUrl));
+                        break;
+                    case 2:
+                        @SuppressLint("InflateParams") View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.add_bookmark_pop_window, null);
+                        initEditHomeQuickPopWindow(view);
+                        editHomeQuickPopWindow = new CustomPopWindow.PopupWindowBuilder(MainActivity.this)
+                                .setView(view)
+                                .enableBackgroundDark(true)
+                                .create()
+                                .showAtLocation(coordinatorLayout, Gravity.CENTER, 0, 0);
+                        break;
+                }
+                return false;
+            }
+        });
+    }
+
+    /**
+     * 同步主页快捷方式列表
+     */
+    private void syncHomeQuickList() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                homeQuickList.clear();
+                for (final HomeQuick homeQuick : homeQuicks) {
+                    HomeQuickItem homeQuickItem = new HomeQuickItem();
+                    final String homeQuickUrl = homeQuick.getWebsite();
+                    homeQuickItem.setId(homeQuick.getId());
+                    homeQuickItem.setTitle(homeQuick.getTitle());
+                    homeQuickItem.setWebsite(homeQuickUrl);
+                    homeQuickItem.setOpenClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            MainActivity.this.homeQuickUrl = homeQuickUrl;
+                            editHomeQuick = homeQuick;
+                            homeQuickLastTime = homeQuickCurTime;
+                            homeQuickCurTime = System.currentTimeMillis();
+                            if (homeQuickCurTime - homeQuickLastTime < 300) {
+                                homeQuickCurTime = 0;
+                                homeQuickLastTime = 0;
+                                handler.removeMessages(1);
+                                handler.sendEmptyMessage(2);
+                            } else {
+                                handler.sendEmptyMessageDelayed(1, 310);
+                            }
+                        }
+                    });
+                    homeQuickList.add(homeQuickItem);
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        homeQuickAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 初始化编辑书签弹窗
+     */
+    private void initEditHomeQuickPopWindow(View view) {
+        TextView textView = view.findViewById(R.id.add_bookmark_text);
+        textView.setText("编辑");
+        final EditText titleEdit = view.findViewById(R.id.title_edit);
+        titleEdit.setText(editHomeQuick.getTitle());
+        final EditText websiteEdit = view.findViewById(R.id.website_edit);
+        websiteEdit.setText(editHomeQuick.getWebsite());
+
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.add_bookmark_button:
+                        if (!titleEdit.getText().toString().equals("") && !websiteEdit.getText().toString().equals("")) {
+                            homeQuicks.get(homeQuicks.indexOf(editHomeQuick)).setTitle(titleEdit.getText().toString());
+                            homeQuicks.get(homeQuicks.indexOf(editHomeQuick)).setWebsite(websiteEdit.getText().toString());
+                            homeQuicks.get(homeQuicks.indexOf(editHomeQuick)).save();
+                            syncHomeQuickList();
+                            editHomeQuickPopWindow.dissmiss();
+                            showSnackBar(coordinatorLayout, "已保存更改");
+                        }
+                        break;
+                    case R.id.add_home_quick_button:
+                        if (!titleEdit.getText().toString().equals("") && !websiteEdit.getText().toString().equals("")) {
+                            Bookmark bookmark = new Bookmark();
+                            bookmark.setTitle(titleEdit.getText().toString());
+                            bookmark.setWebsite(websiteEdit.getText().toString());
+                            bookmark.save();
+                            editHomeQuickPopWindow.dissmiss();
+                            showSnackBar(coordinatorLayout, "已添加至书签");
+                        }
+                        break;
+                    case R.id.cancel_add_bookmark_button:
+                        editHomeQuickPopWindow.dissmiss();
+                        showActionSnackBar(coordinatorLayout, "确定删除快捷方式吗？(此操作不可逆)", "删除", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                LitePal.delete(HomeQuick.class, editHomeQuick.getId());
+                                homeQuicks.remove(editHomeQuick);
+                                syncHomeQuickList();
+                                showSnackBar(coordinatorLayout, "快捷方式已删除");
+                            }
+                        });
+                        break;
+                }
+            }
+        };
+
+        TextView editButton = view.findViewById(R.id.add_bookmark_button);
+        editButton.setText("更改");
+        editButton.setOnClickListener(clickListener);
+        TextView bookmarkButton = view.findViewById(R.id.add_home_quick_button);
+        bookmarkButton.setText("书签");
+        bookmarkButton.setOnClickListener(clickListener);
+        TextView cancelButton = view.findViewById(R.id.cancel_add_bookmark_button);
+        cancelButton.setText("删除");
+        cancelButton.setOnClickListener(clickListener);
     }
 
     /**
@@ -877,7 +1084,17 @@ public class MainActivity extends BaseActivity {
         addBookmarkFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (!webViews.get(topPage).getUrl().equals("about:blank")) {
+                    @SuppressLint("InflateParams") View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.add_bookmark_pop_window, null);
+                    initAddBookmarkPopWindow(view);
+                    addBookmarkPopWindow = new CustomPopWindow.PopupWindowBuilder(MainActivity.this)
+                            .setView(view)
+                            .enableBackgroundDark(true)
+                            .create()
+                            .showAtLocation(coordinatorLayout, Gravity.CENTER, 0, 0);
+                } else {
+                    showSnackBar(coordinatorLayout, "主页无需添加书签");
+                }
             }
         });
 
@@ -909,7 +1126,7 @@ public class MainActivity extends BaseActivity {
         homeFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                webViews.get(topPage).loadUrl(homePage);
+                webViews.get(topPage).loadUrl(seniorUrl(homePage));
             }
         });
         homeFab.setOnLongClickListener(new View.OnLongClickListener() {
@@ -935,6 +1152,56 @@ public class MainActivity extends BaseActivity {
                 }
             }
         });
+    }
+
+    /**
+     * 初始化添加书签弹窗
+     */
+    private void initAddBookmarkPopWindow(View view) {
+        final EditText titleEdit = view.findViewById(R.id.title_edit);
+        titleEdit.setText(webViews.get(topPage).getTitle());
+        final EditText websiteEdit = view.findViewById(R.id.website_edit);
+        websiteEdit.setText(webViews.get(topPage).getUrl());
+
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.add_bookmark_button:
+                        if (!titleEdit.getText().toString().equals("") && !websiteEdit.getText().toString().equals("")) {
+                            Bookmark bookmark = new Bookmark();
+                            bookmark.setTitle(titleEdit.getText().toString());
+                            bookmark.setWebsite(websiteEdit.getText().toString());
+                            bookmark.save();
+                            addBookmarkPopWindow.dissmiss();
+                            showSnackBar(coordinatorLayout, "书签添加成功");
+                        }
+                        break;
+                    case R.id.add_home_quick_button:
+                        if (!titleEdit.getText().toString().equals("") && !websiteEdit.getText().toString().equals("")) {
+                            HomeQuick homeQuick = new HomeQuick();
+                            homeQuick.setTitle(titleEdit.getText().toString());
+                            homeQuick.setWebsite(websiteEdit.getText().toString());
+                            homeQuick.save();
+                            homeQuicks.add(homeQuick);
+                            syncHomeQuickList();
+                            addBookmarkPopWindow.dissmiss();
+                            showSnackBar(coordinatorLayout, "已添加至主页");
+                        }
+                        break;
+                    case R.id.cancel_add_bookmark_button:
+                        addBookmarkPopWindow.dissmiss();
+                        break;
+                }
+            }
+        };
+
+        TextView bookmarkButton = view.findViewById(R.id.add_bookmark_button);
+        bookmarkButton.setOnClickListener(clickListener);
+        TextView homeQuickButton = view.findViewById(R.id.add_home_quick_button);
+        homeQuickButton.setOnClickListener(clickListener);
+        TextView cancelButton = view.findViewById(R.id.cancel_add_bookmark_button);
+        cancelButton.setOnClickListener(clickListener);
     }
 
     /**
@@ -1004,9 +1271,12 @@ public class MainActivity extends BaseActivity {
             }
         }
 
+        webView.requestFocus();
+        webView.requestFocusFromTouch();
         webView.requestFocusFromTouch();//支持获取手势焦点
         webView.setDrawingCacheEnabled(true);//开启绘制缓存
         webView.addJavascriptInterface(new JavascriptInterface(), "local_obj");
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);//开启硬件加速
 
         //添加下载监听
         webView.setDownloadListener(new DownloadListener() {
@@ -1111,16 +1381,20 @@ public class MainActivity extends BaseActivity {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
 
+                closeSuggestList();
+
                 //注入深色模式CSS
                 if (darkMode) {
-                    view.loadUrl("javascript:(function() {"
-                            + "var parent = document.getElementsByTagName('head').item(0);"
-                            + "var style = document.createElement('style');"
-                            + "style.type = 'text/css';"
-                            + "style.innerHTML = window.atob('"
-                            + darkModeCSS + "');"
-                            + "parent.appendChild(style)"
-                            + "})();");
+                    if (isDarkModeExceptUrl(url)) {
+                        view.loadUrl("javascript:(function() {"
+                                + "var parent = document.getElementsByTagName('head').item(0);"
+                                + "var style = document.createElement('style');"
+                                + "style.type = 'text/css';"
+                                + "style.innerHTML = window.atob('"
+                                + darkModeCSS + "');"
+                                + "parent.appendChild(style)"
+                                + "})();");
+                    }
                 }
             }
 
@@ -1128,16 +1402,17 @@ public class MainActivity extends BaseActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
 
-                //注入深色模式CSS
                 if (darkMode) {
-                    view.loadUrl("javascript:(function() {"
-                            + "var parent = document.getElementsByTagName('head').item(0);"
-                            + "var style = document.createElement('style');"
-                            + "style.type = 'text/css';"
-                            + "style.innerHTML = window.atob('"
-                            + darkModeCSS + "');"
-                            + "parent.appendChild(style)"
-                            + "})();");
+                    if (isDarkModeExceptUrl(url)) {
+                        view.loadUrl("javascript:(function() {"
+                                + "var parent = document.getElementsByTagName('head').item(0);"
+                                + "var style = document.createElement('style');"
+                                + "style.type = 'text/css';"
+                                + "style.innerHTML = window.atob('"
+                                + darkModeCSS + "');"
+                                + "parent.appendChild(style)"
+                                + "})();");
+                    }
                 }
 
                 //获取html源码
@@ -1168,6 +1443,16 @@ public class MainActivity extends BaseActivity {
                         history.setTime(getTime());
                         history.save();
                     }
+                }
+
+                if (enabledRecovery) {
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putInt("recovery_num", webViews.size());
+                    for (int i = 0; i < webViews.size(); i++) {
+                        String recoveryPage = "recovery_page_" + i;
+                        editor.putString(recoveryPage, webViews.get(i).getUrl());
+                    }
+                    editor.apply();
                 }
             }
         };
@@ -1205,22 +1490,22 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                closeSuggestList();
-
                 if (webViews.get(topPage) == view) {
                     if (newProgress < 100) {
                         progressBar.setVisibility(View.VISIBLE);
                         progressBar.setProgress(newProgress);
                         //注入深色模式CSS
                         if (newProgress > 20 && darkMode) {
-                            view.loadUrl("javascript:(function() {"
-                                    + "var parent = document.getElementsByTagName('head').item(0);"
-                                    + "var style = document.createElement('style');"
-                                    + "style.type = 'text/css';"
-                                    + "style.innerHTML = window.atob('"
-                                    + darkModeCSS + "');"
-                                    + "parent.appendChild(style)"
-                                    + "})();");
+                            if (isDarkModeExceptUrl(view.getUrl())) {
+                                view.loadUrl("javascript:(function() {"
+                                        + "var parent = document.getElementsByTagName('head').item(0);"
+                                        + "var style = document.createElement('style');"
+                                        + "style.type = 'text/css';"
+                                        + "style.innerHTML = window.atob('"
+                                        + darkModeCSS + "');"
+                                        + "parent.appendChild(style)"
+                                        + "})();");
+                            }
                         }
                     } else {
                         progressBar.setVisibility(View.INVISIBLE);
@@ -1283,6 +1568,7 @@ public class MainActivity extends BaseActivity {
                 }
                 fullVideoLayout.removeAllViews();
                 fullVideoLayout.setVisibility(View.GONE);
+                closeSuggestList();
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
                 drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
                 changeFullScreen();
@@ -1292,6 +1578,20 @@ public class MainActivity extends BaseActivity {
         webView.setWebChromeClient(webChromeClient);
 
         webView.loadUrl(seniorUrl(url));
+    }
+
+    /**
+     * 判断是否为深色模式例外网站
+     */
+    private boolean isDarkModeExceptUrl(String url) {
+        boolean result = false;
+        for (String s : DARKMODE_EXCEPT) {
+            result = url.contains(s);
+            if (result) {
+                break;
+            }
+        }
+        return !result;
     }
 
     /**
@@ -1464,10 +1764,14 @@ public class MainActivity extends BaseActivity {
                         if (Patterns.WEB_URL.matcher("https://" + originUrl).matches()) {
                             return "https://" + originUrl;
                         } else {
-                            return engine + originUrl;
+                            if (Patterns.WEB_URL.matcher(engine + originUrl).matches()) {
+                                return engine + originUrl;
+                            } else {
+                                return "https://www.baidu.com/s?wd=" + originUrl;
+                            }
                         }
                     } catch (Exception eh) {
-                        return engine + originUrl;
+                        return "https://www.baidu.com/s?wd=" + originUrl;
                     }
                 }
             }
@@ -1612,7 +1916,7 @@ public class MainActivity extends BaseActivity {
 
         setToolbarContentHint();
 
-        if (topPage >= 9) {
+        if (topPage == 10) {
             showSnackBar(coordinatorLayout, "新增过多页面可能会引起系统卡顿或其他未知问题,请谨慎添加");
         }
 
@@ -1634,7 +1938,7 @@ public class MainActivity extends BaseActivity {
 
         syncWebPageList();
 
-        if (webViews.size() >= 9) {
+        if (webViews.size() == 10) {
             showSnackBar(coordinatorLayout, "新增过多页面可能会引起系统卡顿或其他未知问题,请谨慎添加");
         }
     }
@@ -1670,6 +1974,7 @@ public class MainActivity extends BaseActivity {
         webViewLayout.removeView(webView);
         webView.loadUrl("about:blank");
         webView.stopLoading();
+        webView.clearHistory();
         webView.setWebChromeClient(null);
         webView.setWebViewClient(null);
         webView.destroy();
@@ -1698,6 +2003,7 @@ public class MainActivity extends BaseActivity {
             webViewLayout.removeView(webView);
             webView.loadUrl("about:blank");
             webView.stopLoading();
+            webView.clearHistory();
             webView.setWebChromeClient(null);
             webView.setWebViewClient(null);
             webView.destroy();
@@ -1716,12 +2022,21 @@ public class MainActivity extends BaseActivity {
             webView.loadUrl("about:blank");
             webView.stopLoading();
             webView.clearHistory();
+            if (clearCacheExit) {
+                webView.clearCache(true);
+            }
+            if (clearFormDataExit) {
+                webView.clearFormData();
+            }
             webView.setWebChromeClient(null);
             webView.setWebViewClient(null);
             webView.destroy();
         }
         webViews.clear();
         webPageList.clear();
+        if (clearHistoryExit) {
+            LitePal.deleteAll(History.class);
+        }
     }
 
     /**
@@ -1753,16 +2068,19 @@ public class MainActivity extends BaseActivity {
             }
 
             @Override
-            public void onResponse(@NotNull Call call, @NotNull final Response response) {
+            public void onResponse(@NotNull Call call, @NotNull Response response) {
+                String oneString = "";
+                try {
+                    JSONObject jsonObject = new JSONObject(Objects.requireNonNull(response.body()).string());
+                    oneString = jsonObject.getString("hitokoto");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                final String finalOneString = oneString;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            JSONObject jsonObject = new JSONObject(Objects.requireNonNull(response.body()).string());
-                            oneText.setText(jsonObject.getString("hitokoto"));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        oneText.setText(finalOneString);
                     }
                 });
             }
@@ -1926,7 +2244,6 @@ public class MainActivity extends BaseActivity {
             boolean darkModeFollowSystem = prefs.getBoolean("dark_mode_follow_system", true);
             if (darkModeFollowSystem) {
                 darkMode = isSystemDarkMode();
-                isSystemChangeDarkMode = true;
                 changeDarkMode();
             }
         }
@@ -1937,9 +2254,7 @@ public class MainActivity extends BaseActivity {
         if (drawerLayout.isDrawerOpen(GravityCompat.START) || drawerLayout.isDrawerOpen(GravityCompat.END)) {
             drawerLayout.closeDrawers();
         } else {
-            if (fullVideoLayout.getVisibility() == View.VISIBLE) {
-                return;
-            } else {
+            if (fullVideoLayout.getVisibility() != View.VISIBLE) {
                 if (suggestRecyclerView.getVisibility() == View.VISIBLE) {
                     toolbarEdit.clearFocus();
                     closeSuggestList();
@@ -2059,14 +2374,115 @@ public class MainActivity extends BaseActivity {
                     showSnackBar(coordinatorLayout, "未识别到内容");
                 }
                 break;
+            case BOOKMARK_RESQUEST_CODE:
+                if (resultCode == Activity.RESULT_FIRST_USER && data != null && data.getBooleanExtra("add_home_quick", false)) {
+                    homeQuicks = LitePal.findAll(HomeQuick.class);
+                    syncHomeQuickList();
+                }
             case HISTORY_RESQUEST_CODE:
-                if (resultCode == Activity.RESULT_FIRST_USER && data != null) {
+                if (resultCode == Activity.RESULT_FIRST_USER && data != null && data.getStringExtra("url") != null) {
                     addNewPageForeground(seniorUrl(data.getStringExtra("url")));
+                }
+                break;
+            case SETTINGS_RESQUEST_CODE:
+                if (resultCode == Activity.RESULT_FIRST_USER) {
+                    applySettings(data);
                 }
                 break;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    /**
+     * 应用设置
+     */
+    private void applySettings(Intent data) {
+        if (prefs.getBoolean("java_script", true) != enabledJavaScript) {
+            enabledJavaScript = prefs.getBoolean("java_script", true);
+            changeJavaScriptStatus();
+        }
+
+        if (prefs.getBoolean("drop_reload", true) != enabledDropReload) {
+            enabledDropReload = prefs.getBoolean("drop_reload", true);
+            if (uaPC) {
+                swipeRefreshLayout.setEnabled(false);
+            } else {
+                swipeRefreshLayout.setEnabled(enabledDropReload);
+            }
+        }
+
+        enabledKeyCtrl = prefs.getBoolean("key_ctrl", false);
+
+        if (prefs.getBoolean("recovery", false) != enabledRecovery) {
+            enabledRecovery = prefs.getBoolean("recovery", false);
+        }
+
+        clearCacheExit = prefs.getBoolean("clear_cache_exit", false);
+        clearFormDataExit = prefs.getBoolean("clear_form_data_exit", false);
+        clearHistoryExit = prefs.getBoolean("clear_history_exit", false);
+
+        try {
+            if (data.getBooleanExtra("clear_cache", false)) {
+                for (EnhancedWebView webView : webViews) {
+                    webView.clearCache(true);
+                }
+            }
+
+            if (data.getBooleanExtra("clear_form_data", false)) {
+                for (EnhancedWebView webView : webViews) {
+                    webView.clearFormData();
+                }
+            }
+
+            if (data.getStringExtra("url") != null) {
+                addNewPageForeground(seniorUrl(data.getStringExtra("url")));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (!prefs.getString("home_page", "about:blank").equals(homePage)) {
+            if (webViews.get(topPage).getUrl().equals(homePage)) {
+                webViews.get(topPage).loadUrl(seniorUrl(prefs.getString("home_page", "about:blank")));
+            }
+            homePage = prefs.getString("home_page", "about:blank");
+        }
+
+        engine = prefs.getString("engine", "https://www.baidu.com/s?wd=");
+
+        if (prefs.getInt("toolbar_content", TITLE) != toolbarContent) {
+            toolbarContent = prefs.getInt("toolbar_content", TITLE);
+            setToolbarContentHint();
+        }
+
+        if (prefs.getBoolean("dark_mode", false) != darkMode) {
+            darkMode = prefs.getBoolean("dark_mode", false);
+            changeDarkMode();
+        }
+    }
+
+    /**
+     * 更改JavaScript状态
+     */
+    private void changeJavaScriptStatus() {
+        for (EnhancedWebView webView : webViews) {
+            webView.getSettings().setJavaScriptEnabled(enabledJavaScript);
+            webView.reload();
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (enabledKeyCtrl) {
+            if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+                webViews.get(topPage).pageUp(false);
+            } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+                webViews.get(topPage).pageDown(false);
+            }
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -2177,5 +2593,94 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    static class DragHomeQuickItemCallback extends ItemTouchHelper.Callback {
+
+        private HomeQuickAdapter adapter;
+
+        public DragHomeQuickItemCallback(HomeQuickAdapter adapter) {
+            this.adapter = adapter;
+        }
+
+        @Override
+        public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+            int dragFlag;
+            RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+            if (layoutManager instanceof GridLayoutManager) {
+                dragFlag = ItemTouchHelper.UP | ItemTouchHelper.DOWN
+                        | ItemTouchHelper.START | ItemTouchHelper.END;
+            } else {
+                dragFlag = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+            }
+            return makeMovementFlags(dragFlag, 0);
+        }
+
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            int fromPosition = viewHolder.getAdapterPosition();
+            int toPosition = target.getAdapterPosition();
+
+            HomeQuick homeQuick1;
+            HomeQuick homeQuick2;
+            HomeQuick homeQuickTemp = new HomeQuick();
+
+            if (fromPosition < toPosition) {
+                for (int i = fromPosition; i < toPosition; i++) {
+                    homeQuick1 = MainActivity.homeQuicks.get(i);
+                    homeQuick2 = MainActivity.homeQuicks.get(i + 1);
+                    homeQuickTemp.setTitle(homeQuick1.getTitle());
+                    homeQuickTemp.setWebsite(homeQuick1.getWebsite());
+                    homeQuick1.setTitle(homeQuick2.getTitle());
+                    homeQuick1.setWebsite(homeQuick2.getWebsite());
+                    homeQuick1.save();
+                    homeQuick2.setTitle(homeQuickTemp.getTitle());
+                    homeQuick2.setWebsite(homeQuickTemp.getWebsite());
+                    homeQuick2.save();
+                    Collections.swap(adapter.getHomeQuickList(), i, i + 1);
+                }
+            } else {
+                for (int i = fromPosition; i > toPosition; i--) {
+                    homeQuick1 = MainActivity.homeQuicks.get(i);
+                    homeQuick2 = MainActivity.homeQuicks.get(i - 1);
+                    homeQuickTemp.setTitle(homeQuick1.getTitle());
+                    homeQuickTemp.setWebsite(homeQuick1.getWebsite());
+                    homeQuick1.setTitle(homeQuick2.getTitle());
+                    homeQuick1.setWebsite(homeQuick2.getWebsite());
+                    homeQuick1.save();
+                    homeQuick2.setTitle(homeQuickTemp.getTitle());
+                    homeQuick2.setWebsite(homeQuickTemp.getWebsite());
+                    homeQuick2.save();
+                    Collections.swap(adapter.getHomeQuickList(), i, i - 1);
+                }
+            }
+
+            Objects.requireNonNull(recyclerView.getAdapter()).notifyItemMoved(fromPosition, toPosition);
+            return true;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+
+        }
+
+        @Override
+        public void onSelectedChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+            super.onSelectedChanged(viewHolder, actionState);
+            if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                viewHolder.itemView.setAlpha(0.5f);
+            }
+        }
+
+        @Override
+        public void clearView(@NotNull RecyclerView recyclerView, @NotNull RecyclerView.ViewHolder viewHolder) {
+            super.clearView(recyclerView, viewHolder);
+            viewHolder.itemView.setAlpha(1);
+        }
+
+        @Override
+        public boolean isLongPressDragEnabled() {
+            return true;
+        }
+
+    }
 
 }

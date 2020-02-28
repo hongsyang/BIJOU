@@ -29,7 +29,7 @@
         android:minHeight="64dp"
         android:textColor="@color/colorTextAuxiliary"
         android:textColorHint="@color/colorTextOther"
-        android:textSize="16sp"
+        android:textSize="18sp"
         tools:ignore="LabelFor" />
 
     <TextView
@@ -53,7 +53,7 @@
             android:lines="1"
             android:text="@string/kua_ua"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/simple_ua_button"
@@ -63,7 +63,7 @@
             android:lines="1"
             android:text="@string/simple_ua"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/we_ua_button"
@@ -73,7 +73,7 @@
             android:lines="1"
             android:text="@string/we_ua"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/ie_ua_button"
@@ -83,7 +83,7 @@
             android:lines="1"
             android:text="@string/ie_ua"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/symbian_ua_button"
@@ -93,7 +93,7 @@
             android:lines="1"
             android:text="@string/symbain_ua"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
     </LinearLayout>
 
@@ -112,7 +112,7 @@
             android:lines="1"
             android:text="@string/apply"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <TextView
             android:id="@+id/reset_ua_button"
@@ -123,7 +123,7 @@
             android:lines="1"
             android:text="@string/reset"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <TextView
             android:id="@+id/dismiss_change_ua_button"
@@ -134,7 +134,7 @@
             android:lines="1"
             android:text="@string/cancel"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
     </LinearLayout>
 

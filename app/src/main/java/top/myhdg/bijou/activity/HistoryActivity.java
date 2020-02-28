@@ -75,34 +75,45 @@ public class HistoryActivity extends BaseActivity {
      * 同步历史记录列表
      */
     private void syncHistoryList() {
-        historyList.clear();
-        for (final History history : histories) {
-            HistoryItem historyItem = new HistoryItem();
-            final long id = history.getId();
-            historyItem.setId(history.getId());
-            historyItem.setTitle(history.getTitle());
-            historyItem.setWebsite(history.getWebsite());
-            historyItem.setTime(history.getTime());
-            historyItem.setDeleteClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    LitePal.delete(History.class, id);
-                    histories.remove(history);
-                    syncHistoryList();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                historyList.clear();
+                for (int i = histories.size() - 1; i >= 0; i--) {
+                    final History history = histories.get(i);
+                    HistoryItem historyItem = new HistoryItem();
+                    final long id = history.getId();
+                    historyItem.setId(history.getId());
+                    historyItem.setTitle(history.getTitle());
+                    historyItem.setWebsite(history.getWebsite());
+                    historyItem.setTime(history.getTime());
+                    historyItem.setDeleteClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            LitePal.delete(History.class, id);
+                            histories.remove(history);
+                            syncHistoryList();
+                        }
+                    });
+                    historyItem.setOpenClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent data = new Intent();
+                            data.putExtra("url", history.getWebsite());
+                            setResult(Activity.RESULT_FIRST_USER, data);
+                            HistoryActivity.this.finish();
+                        }
+                    });
+                    historyList.add(historyItem);
                 }
-            });
-            historyItem.setOpenClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent data = new Intent();
-                    data.putExtra("url", history.getWebsite());
-                    setResult(Activity.RESULT_FIRST_USER, data);
-                    HistoryActivity.this.finish();
-                }
-            });
-            historyList.add(historyItem);
-        }
-        adapter.notifyDataSetChanged();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }).start();
     }
 
     /**

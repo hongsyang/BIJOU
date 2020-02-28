@@ -21,11 +21,13 @@
         android:icon="@mipmap/icon"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
+        android:resizeableActivity="true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning"
         tools:targetApi="q">
+        <activity android:name=".activity.RewardVideoActivity"></activity>
 
         <meta-data
             android:name="android.notch_support"
@@ -33,6 +35,19 @@
         <meta-data
             android:name="notch.config"
             android:value="portrait|landscape" />
+        <meta-data
+            android:name="android.max_aspect"
+            android:value="2.3" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="top.myhdg.bijou.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/gdt_file_path" />
+        </provider>
 
         <activity
             android:name=".activity.WelcomeActivity"
@@ -90,27 +105,40 @@
                 <data android:scheme="https" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".activity.MainActivity"
             android:configChanges="uiMode|orientation|keyboardHidden|screenSize|navigation"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustPan|stateHidden" />
-
         <activity
             android:name=".activity.SourceActivity"
             android:configChanges="uiMode" />
-
         <activity
             android:name=".activity.HistoryActivity"
             android:configChanges="uiMode" />
-
         <activity
             android:name=".activity.ImageActivity"
             android:configChanges="uiMode" />
-
+        <activity
+            android:name=".activity.BookmarkActivity"
+            android:configChanges="uiMode" />
+        <activity
+            android:name=".activity.SettingsActivity"
+            android:configChanges="uiMode" />
+        <activity
+            android:name=".activity.AboutActivity"
+            android:configChanges="uiMode" />
         <activity android:name="io.github.xudaojie.qrcodelib.CaptureActivity" />
-
+        <activity
+            android:name="com.qq.e.ads.PortraitADActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity" />
+        <activity
+            android:name="com.qq.e.ads.LandscapeADActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:screenOrientation="landscape"
+            tools:ignore="LockedOrientationActivity" />
     </application>
 
 </manifest>

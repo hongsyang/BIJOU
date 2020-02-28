@@ -57,8 +57,8 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         holder.historyTitleText.setText(historyItem.getTitle());
         holder.historySiteText.setText(historyItem.getWebsite());
         holder.historyTimeText.setText(historyItem.getTime());
-        holder.deleteHistoryButton.setOnClickListener(historyItem.getDeleteClickListener());
         holder.historyItem.setOnClickListener(historyItem.getOpenClickListener());
+        holder.deleteHistoryButton.setOnClickListener(historyItem.getDeleteClickListener());
     }
 
     @Override

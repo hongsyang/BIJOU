@@ -191,6 +191,7 @@
                     android:src="@mipmap/bijou" />
 
                 <com.lihang.ShadowLayout
+                    android:id="@+id/shadow_layout"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/bijou_i"
@@ -216,6 +217,15 @@
                         android:textSize="20sp" />
 
                 </com.lihang.ShadowLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/home_quick_recyler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/shadow_layout"
+                    android:layout_marginTop="80dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp" />
 
             </RelativeLayout>
 
@@ -243,7 +253,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="30dp"
-            android:layout_marginBottom="48dp"
+            android:layout_marginBottom="52dp"
             app:layout_behavior=".view.ScrollAwareFabMenuBehavior"
             app:menu_colorNormal="@color/colorAccent"
             app:menu_colorPressed="@color/colorAccent"

@@ -50,3 +50,32 @@
 #PhotoView
 -keep class com.bm.photoview.** {*;}
 -keep class com.bm.library.** {*;}
+
+#CircleImageView
+-keep class de.hdodenhof.circleimageview.** {*;}
+
+#AD
+-keep class com.tencent.mm.opensdk.** {*;}
+-keep class com.tencent.wxop.** {*;}
+-keep class com.tencent.mm.sdk.** {*;}
+-dontwarn com.tencent.bugly.**
+-keep public class com.tencent.bugly.**{*;}
+-keep class com.bytedance.sdk.openadsdk.** { *; }
+-keep class com.androidquery.callback.** {*;}
+-keep public interface com.bytedance.sdk.openadsdk.downloadnew.** {*;}
+-keep class com.ss.sys.ces.* {*;}
+-dontwarn com.ss.android.socialbase.downloader.**
+-dontwarn com.ss.android.crash.log.**
+-keep class com.baidu.mobads.*.** { *; }
+-keep class com.baidu.mobad.*.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class com.mintegral.** {*; }
+-keep interface com.mintegral.** {*; }
+-keep class android.support.v4.** { *; }
+-dontwarn com.mintegral.**
+-keep class **.R$* { public static final int mintegral*; }
+-keep class com.alphab.** {*; }
+-keep interface com.alphab.** {*; }
+-dontwarn com.ksad.download.**
+-dontwarn com.kwad.sdk.**
