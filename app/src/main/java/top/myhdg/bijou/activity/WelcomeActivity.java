@@ -46,7 +46,7 @@ public class WelcomeActivity extends BaseActivity {
         editor.putBoolean("dark_mode", darkMode);
         editor.apply();
 
-        int time = 500;
+        int time = 300;
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override

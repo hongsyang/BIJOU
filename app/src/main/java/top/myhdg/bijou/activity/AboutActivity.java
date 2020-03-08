@@ -34,7 +34,7 @@ public class AboutActivity extends BaseActivity {
         checkUpdateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                resultIntent.putExtra("url", "https://www.coolapk.com/apk/top.myhdg.bijou");
+                resultIntent.putExtra("url", "https://shouji.baidu.com/software/26841740.html");
                 setResult(Activity.RESULT_FIRST_USER, resultIntent);
                 AboutActivity.this.finish();
             }

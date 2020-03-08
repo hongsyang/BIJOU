@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aria>
+    <!--注意，修改该配置文件中的属性会覆盖代码中所设置的属性-->
+
+    <!--Aria框架配置-->
+    <app>
+        <!-- 是否检查网络 true: 检查网络，false: 不检查网络-->
+        <netCheck value="true"/>
+        <!--断网的时候是否重试，true：断网也重试；false：断网不重试，直接走失败的回调-->
+        <notNetRetry value="false"/>
+    </app>
+
+
+    <!--普通下载任务-->
+    <download>
+
+        <!--
+          多线程下载是否使用块下载模式，{@code true}使用，{@code false}不使用
+          注意：
+            1、使用分块模式，在I/O性能底下的手机上，合并文件需要的时间会更加长；
+            2、优点是使用多线程的块下载，初始化时，文件初始化时将不会预占用对应长度的空间；
+            3、只对新的多线程下载任务有效
+            4、只对多线程的任务有效
+        -->
+        <useBlock value="true"/>
+
+        <!--设置下载队列最大任务数， 默认为2-->
+        <maxTaskNum value="3"/>
+
+        <!--设置下载失败，重试次数，默认为10-->
+        <reTryNum value="5"/>
+
+        <!--是否需要转换速度单位，转换完成后为：1b/s、1kb/s、1mb/s、1gb/s、1tb/s，如果不需要将返回byte长度-->
+        <convertSpeed value="true"/>
+
+    </download>
+
+</aria>

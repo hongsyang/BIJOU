@@ -8,8 +8,8 @@ android {
         applicationId "top.myhdg.bijou"
         minSdkVersion 23
         targetSdkVersion 29
-        versionCode 2
-        versionName "2.0"
+        versionCode 3
+        versionName "2.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -41,45 +41,33 @@ repositories {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-
     implementation 'com.google.android.material:material:1.2.0-alpha05'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0'
-
     implementation 'skin.support:skin-support:4.0.4'
     implementation 'skin.support:skin-support-appcompat:4.0.4'
     implementation 'skin.support:skin-support-design:4.0.4'
     implementation 'skin.support:skin-support-cardview:4.0.4'
-
     implementation 'com.gyf.immersionbar:immersionbar:3.0.0'
     implementation 'com.gyf.immersionbar:immersionbar-components:3.0.0'
-
     implementation 'org.litepal.android:java:3.0.0'
-
-    implementation 'com.squareup.okhttp3:okhttp:4.3.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.4.0'
     implementation 'org.conscrypt:conscrypt-android:2.2.1'
-
     implementation 'com.github.bumptech.glide:glide:4.11.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
-
     implementation 'com.kyleduo.switchbutton:library:2.0.0'
-
     implementation 'com.github.clans:fab:1.6.4'
-
     implementation 'com.github.lihangleo2:ShadowLayout:2.1.6'
-
     implementation 'com.github.XuDaojie:QRCode-Android:v0.4.2'
-
     implementation 'com.github.pinguo-zhouwei:CustomPopwindow:2.1.1'
-
     implementation 'com.bm.photoview:library:1.4.1'
-
     implementation 'de.hdodenhof:circleimageview:3.1.0'
-
-    implementation(name: 'GDTSDK.unionNormal.4.170.1040', ext: 'aar')
+    implementation 'com.arialyy.aria:core:3.8.6'
+    annotationProcessor 'com.arialyy.aria:compiler:3.8.6'
+    implementation files('libs/baidu_cuid.jar')
+    implementation files('libs/BaiduAppX_V2.4.1_20160530.jar')
 }

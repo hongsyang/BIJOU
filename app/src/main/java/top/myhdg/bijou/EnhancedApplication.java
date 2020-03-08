@@ -6,6 +6,8 @@ import android.content.Context;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.arialyy.aria.core.Aria;
+
 import org.litepal.LitePal;
 
 import skin.support.SkinCompatManager;
@@ -33,6 +35,8 @@ public class EnhancedApplication extends Application {
                 .loadSkin();
 
         LitePal.initialize(context);
+
+        Aria.init(this);
     }
 
     public static Context getContext() {

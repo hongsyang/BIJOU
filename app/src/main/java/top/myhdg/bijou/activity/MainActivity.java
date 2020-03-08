@@ -3,7 +3,6 @@ package top.myhdg.bijou.activity;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.DownloadManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -21,6 +20,7 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.print.PrintAttributes;
@@ -68,6 +68,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.arialyy.aria.core.Aria;
 import com.example.zhouwei.library.CustomPopWindow;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
@@ -255,6 +256,11 @@ public class MainActivity extends BaseActivity {
     private static final int ACCESS_FINE_LOCATION = 1;
     private static final int WRITE_EXTERNAL_STORAGE_EXPORT_IMG = 2;
     private static final int WRITE_EXTERNAL_STORAGE_SAVE_IMG = 3;
+    private static final int WRITE_EXTERNAL_STORAGE_DOWNLOAD = 4;
+
+    private String downloadFileName = "";
+    private String downloadUrl = "";
+    private CustomPopWindow addDownloadPopWindow;
 
     private static final String REMOVE_AD_JS = "javascript: $('.u-ad-wrap')" +
             ".remove();$('.home_packet').remove();$('.pbpb-item').remove();$('.m_pbpb_m0')" +
@@ -311,6 +317,7 @@ public class MainActivity extends BaseActivity {
 
         coordinatorLayout = findViewById(R.id.coordinator_layout);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout.setDistanceToTriggerSync(600);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -518,9 +525,8 @@ public class MainActivity extends BaseActivity {
         downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, DownloadActivity.class));
                 drawerLayout.closeDrawers();
-                Intent intent = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
-                MainActivity.this.startActivity(intent);
             }
         });
 
@@ -663,7 +669,7 @@ public class MainActivity extends BaseActivity {
                         break;
                     case R.id.pdf_:
                         PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
-                        String jobName = "BIJOU 导出网页: " + webViews.get(topPage).getTitle();
+                        String jobName = "BIJOU 导出网页：" + webViews.get(topPage).getTitle();
                         PrintDocumentAdapter printAdapter = webViews.get(topPage).createPrintDocumentAdapter(jobName);
                         assert printManager != null;
                         printManager.print(jobName, printAdapter, new PrintAttributes.Builder().build());
@@ -681,7 +687,7 @@ public class MainActivity extends BaseActivity {
     private void exportPicture() {
         showSnackBar(navMenu, "网页图片将在片刻后导入系统图库");
         final EnhancedWebView webView = webViews.get(topPage);
-        final String title = "BIJOU 导出网页: " + webView.getTitle() + ".jpg";
+        final String title = "BIJOU 导出网页：" + webView.getTitle() + ".jpg";
         final File file = getExternalFilesDir(title);
         assert file != null;
         if (file.exists()) {
@@ -793,7 +799,7 @@ public class MainActivity extends BaseActivity {
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
                     String url = webViews.get(topPage).getUrl();
-                    if (!url.equals("about:blank")) {
+                    if (url != null && !url.equals("about:blank")) {
                         toolbarEdit.setText(url);
                         toolbarEdit.selectAll();
                     }
@@ -828,7 +834,9 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                setSuggestList(toolbarEdit.getText().toString());
+                if (toolbarEdit.getText().toString().length() > 0) {
+                    setSuggestList(toolbarEdit.getText().toString());
+                }
             }
 
             @Override
@@ -1090,6 +1098,7 @@ public class MainActivity extends BaseActivity {
                     addBookmarkPopWindow = new CustomPopWindow.PopupWindowBuilder(MainActivity.this)
                             .setView(view)
                             .enableBackgroundDark(true)
+                            .enableOutsideTouchableDissmiss(false)
                             .create()
                             .showAtLocation(coordinatorLayout, Gravity.CENTER, 0, 0);
                 } else {
@@ -1282,12 +1291,21 @@ public class MainActivity extends BaseActivity {
         webView.setDownloadListener(new DownloadListener() {
             @Override
             public void onDownloadStart(final String url, String userAgent, String contentDisposition, String mimeType, long contentLength) {
+                downloadUrl = url;
+                getDownloadFileName();
                 showActionSnackBar(coordinatorLayout, "是否希望创建下载任务:  " + url, "下载", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Uri uri = Uri.parse(url);
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        startActivity(intent);
+                        if (checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE_DOWNLOAD)) {
+                            @SuppressLint("InflateParams") View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.add_download_pop_window, null);
+                            initAddDownloadPopWindow(view);
+                            addDownloadPopWindow = new CustomPopWindow.PopupWindowBuilder(MainActivity.this)
+                                    .setView(view)
+                                    .enableBackgroundDark(true)
+                                    .enableOutsideTouchableDissmiss(false)
+                                    .create()
+                                    .showAtLocation(coordinatorLayout, Gravity.CENTER, 0, 0);
+                        }
                     }
                 });
             }
@@ -1595,6 +1613,80 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
+     * 获取下载文件名
+     */
+    private void getDownloadFileName() {
+        HttpUtil.sendOkHttpRequest(downloadUrl, new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) {
+                String content = response.header("Content-Disposition");
+                try {
+                    if (content != null) {
+                        if (content.split("\"").length > 1) {
+                            downloadFileName = content.split("\"")[1];
+                            downloadFileName = downloadFileName.replaceAll(getString(R.string.regex), "");
+                        } else {
+                            downloadFileName = content.split("=")[1];
+                            downloadFileName = downloadFileName.replaceAll(getString(R.string.regex), "");
+                        }
+                    } else {
+                        downloadFileName = downloadUrl.substring(downloadUrl.lastIndexOf("/") + 1);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    /**
+     * 初始化下载弹窗
+     */
+    private void initAddDownloadPopWindow(View view) {
+        final EditText fileNameEdit = view.findViewById(R.id.file_name_edit);
+        fileNameEdit.setText(downloadFileName);
+        final EditText downloadUrlEdit = view.findViewById(R.id.dl_url_edit);
+        downloadUrlEdit.setText(downloadUrl);
+
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.add_dl_button:
+                        if (!fileNameEdit.getText().toString().equals("") && !downloadUrlEdit.getText().toString().equals("")) {
+                            Aria.download(MainActivity.this)
+                                    .load(downloadUrlEdit.getText().toString())
+                                    .setFilePath(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
+                                            + "/BIJOU/" + fileNameEdit.getText().toString())
+                                    .ignoreFilePathOccupy()
+                                    .create();
+                            KeyboardUtil.closeKeyboard(MainActivity.this, fileNameEdit);
+                            KeyboardUtil.closeKeyboard(MainActivity.this, downloadUrlEdit);
+                            downloadFileName = "";
+                            downloadUrl = "";
+                            addDownloadPopWindow.dissmiss();
+                            showSnackBar(coordinatorLayout, "若无异常，下载任务将在片刻后创建");
+                        }
+                        break;
+                    case R.id.cancel_dl_button:
+                        addDownloadPopWindow.dissmiss();
+                        break;
+                }
+            }
+        };
+
+        TextView downloadButton = view.findViewById(R.id.add_dl_button);
+        downloadButton.setOnClickListener(clickListener);
+        TextView cancelButton = view.findViewById(R.id.cancel_dl_button);
+        cancelButton.setOnClickListener(clickListener);
+    }
+
+    /**
      * 获取系统时间
      */
     private String getTime() {
@@ -1869,7 +1961,8 @@ public class MainActivity extends BaseActivity {
     private void closeSuggestList() {
         toolbarEdit.setText("");
         toolbarEdit.clearFocus();
-        if (webViews.get(topPage).getUrl().equals("about:blank")) {
+        String url = webViews.get(topPage).getUrl();
+        if (url != null && url.equals("about:blank")) {
             openHome();
         } else {
             openWebPage();
@@ -1985,6 +2078,9 @@ public class MainActivity extends BaseActivity {
                 addNewPageForeground(homePage);
             } else {
                 topPage--;
+                if (topPage < 0) {
+                    topPage = 0;
+                }
                 changeWebPage(topPage);
             }
         }
@@ -2220,17 +2316,31 @@ public class MainActivity extends BaseActivity {
                 }
                 break;
             case WRITE_EXTERNAL_STORAGE_EXPORT_IMG:
-                if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    showSnackBar(coordinatorLayout, "存储权限获取失败");
-                } else {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     exportPicture();
+                } else {
+                    showSnackBar(coordinatorLayout, "存储权限获取失败");
                 }
                 break;
             case WRITE_EXTERNAL_STORAGE_SAVE_IMG:
-                if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    showSnackBar(coordinatorLayout, "存储权限获取失败");
-                } else {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     new SaveImage().execute();
+                } else {
+                    showSnackBar(coordinatorLayout, "存储权限获取失败");
+                }
+                break;
+            case WRITE_EXTERNAL_STORAGE_DOWNLOAD:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    @SuppressLint("InflateParams") View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.add_download_pop_window, null);
+                    initAddDownloadPopWindow(view);
+                    addDownloadPopWindow = new CustomPopWindow.PopupWindowBuilder(MainActivity.this)
+                            .setView(view)
+                            .enableBackgroundDark(true)
+                            .enableOutsideTouchableDissmiss(false)
+                            .create()
+                            .showAtLocation(coordinatorLayout, Gravity.CENTER, 0, 0);
+                } else {
+                    showSnackBar(coordinatorLayout, "存储权限获取失败");
                 }
                 break;
         }

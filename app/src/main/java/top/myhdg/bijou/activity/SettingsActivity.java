@@ -246,7 +246,7 @@ public class SettingsActivity extends BaseActivity {
         supportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(SettingsActivity.this, RewardVideoActivity.class));
+                startActivity(new Intent(SettingsActivity.this, ShowADActivity.class));
             }
         });
     }

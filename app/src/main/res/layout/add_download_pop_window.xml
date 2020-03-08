@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/add_bookmark_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:text="@string/download"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="22sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="70dp"
+            android:layout_height="match_parent"
+            android:gravity="start|center_vertical"
+            android:text="@string/file_name"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="20sp" />
+
+        <EditText
+            android:id="@+id/file_name_edit"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:background="@color/colorTransparent"
+            android:gravity="start|center_vertical"
+            android:hint="@string/input_file_name"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:lines="1"
+            android:selectAllOnFocus="true"
+            android:textColor="@color/colorTextAuxiliary"
+            android:textColorHint="@color/colorTextOther"
+            android:textSize="18sp"
+            tools:ignore="LabelFor" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/file_name_notice_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/file_name_notice"
+        android:textColor="@color/colorTextOther"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="70dp"
+            android:layout_height="match_parent"
+            android:gravity="start|center_vertical"
+            android:text="@string/dl_url"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="20sp" />
+
+        <EditText
+            android:id="@+id/dl_url_edit"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:background="@color/colorTransparent"
+            android:gravity="start|center_vertical"
+            android:hint="@string/input_dl_url"
+            android:importantForAutofill="no"
+            android:inputType="textUri"
+            android:lines="1"
+            android:selectAllOnFocus="true"
+            android:textColor="@color/colorTextAuxiliary"
+            android:textColorHint="@color/colorTextOther"
+            android:textSize="18sp"
+            tools:ignore="LabelFor" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/add_dl_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/download"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/cancel_dl_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/cancel"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="20sp"
+            tools:ignore="RelativeOverlap" />
+
+    </LinearLayout>
+
+</LinearLayout>
