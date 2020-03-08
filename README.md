@@ -2,14 +2,14 @@
 
 ## **介绍**
 
-### BIJOU 是一款基于 Android 原生 WebKit 内核开发的 Material Design 设计的轻量级浏览器
+### BIJOU 是一款基于 Android 原生 WebKit 内核开发的 Material Design 设计轻量级浏览器
 
 #### BIJOU 在百度发布：https://shouji.baidu.com/software/26841740.html
 
 #### BIJOU 几乎具备主流浏览器的所有功能：
 #### 搜索、下载、书签、历史、多窗口、网页导出 (图片/PDF)、网页源码、浏览器标识、深色模式、二维码扫描、下拉刷新、启动时恢复页面、自定义主页/搜索引擎等等
 
-#### BIJOU 1.5 在Gitee开源 https://gitee.com/MyHdg/browser
+#### 上古版本 BIJOU 1.5 在 Gitee 开源 https://gitee.com/MyHdg/browser
 
 ## **更新**
 
