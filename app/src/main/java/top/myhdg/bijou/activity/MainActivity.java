@@ -138,7 +138,7 @@ public class MainActivity extends BaseActivity {
     private Button multipleButton;//工具栏多页面按钮
     private ProgressBar progressBar;//进度条
 
-    private RelativeLayout findLayout;
+    private LinearLayout findLayout;
     private Button cancelFindButton;//取消查找按钮
     private EditText findEdit;//查找内容输入框
     private Button findBackButton;//查找上一个按钮
@@ -1478,17 +1478,31 @@ public class MainActivity extends BaseActivity {
 
         WebChromeClient webChromeClient = new WebChromeClient() {
             @Override
-            public boolean onCreateWindow(final WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+            public boolean onCreateWindow(final WebView view, boolean isDialog, boolean isUserGesture, final Message resultMsg) {
                 if (!isDialog) {
-                    showActionSnackBar(coordinatorLayout, "是否同意该网站打开新的窗口", "同意", new View.OnClickListener() {
+                    showActionSnackBar(coordinatorLayout, "该网站希望打开新的窗口", "打开", new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            WebView.HitTestResult result = view.getHitTestResult();
-                            addNewPageForeground(result.getExtra());
+                            final WebView webTemp = new WebView(MainActivity.this);
+                            webTemp.setWebViewClient(new WebViewClient() {
+                                @Override
+                                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                                    addNewPageForeground(url);
+
+                                    webTemp.clearCache(true);
+                                    webTemp.clearHistory();
+                                    webTemp.clearFormData();
+                                    webTemp.destroy();
+                                    return true;
+                                }
+                            });
+                            WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                            transport.setWebView(webTemp);
+                            resultMsg.sendToTarget();
                         }
                     });
                 }
-                return false;
+                return true;
             }
 
             @Override

@@ -11,6 +11,8 @@ import static top.myhdg.bijou.activity.MainActivity.htmlSource;
 
 public class SourceActivity extends BaseActivity {
 
+    private EditText sourceEdit;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,7 +27,12 @@ public class SourceActivity extends BaseActivity {
             }
         });
 
-        EditText sourceEdit = findViewById(R.id.source_edit);
+        sourceEdit = findViewById(R.id.source_edit);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         sourceEdit.setText(htmlSource);
     }

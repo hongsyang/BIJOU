@@ -3,9 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="top.myhdg.bijou">
 
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -14,13 +13,6 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission
-        android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission
-        android:name="android.permission.WRITE_SETTINGS"
-        tools:ignore="ProtectedPermissions" />
 
     <application
         android:name=".EnhancedApplication"
@@ -140,23 +132,9 @@
             android:name=".activity.DownloadActivity"
             android:configChanges="uiMode" />
         <activity
-            android:name=".activity.ShowADActivity"
+            android:name=".activity.SupportActivity"
             android:configChanges="uiMode" />
         <activity android:name="io.github.xudaojie.qrcodelib.CaptureActivity" />
-
-        <receiver android:name="com.baidu.appx.app_download.CompleteReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
-                <action android:name="android.intent.action.DOWNLOAD_NOTIFICATION_CLICKED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_ADDED" />
-                <data android:scheme="package" />
-            </intent-filter>
-        </receiver>
-        <activity
-            android:name="com.baidu.appx.uikit.BDActivity"
-            android:configChanges="orientation|screenSize" />
     </application>
 
 </manifest>

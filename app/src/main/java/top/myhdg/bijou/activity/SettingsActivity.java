@@ -246,7 +246,7 @@ public class SettingsActivity extends BaseActivity {
         supportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(SettingsActivity.this, ShowADActivity.class));
+                startActivityForResult(new Intent(SettingsActivity.this, SupportActivity.class), 2);
             }
         });
     }
@@ -719,7 +719,7 @@ public class SettingsActivity extends BaseActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == 1) {
+        if (requestCode == 1 || requestCode == 2) {
             if (resultCode == Activity.RESULT_FIRST_USER) {
                 if (data != null) {
                     resultData.putExtra("url", data.getStringExtra("url"));

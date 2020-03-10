@@ -68,6 +68,4 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:3.1.0'
     implementation 'com.arialyy.aria:core:3.8.6'
     annotationProcessor 'com.arialyy.aria:compiler:3.8.6'
-    implementation files('libs/baidu_cuid.jar')
-    implementation files('libs/BaiduAppX_V2.4.1_20160530.jar')
 }

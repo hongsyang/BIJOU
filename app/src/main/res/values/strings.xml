@@ -43,7 +43,6 @@
     <string name="new_page_back_open">后台新窗口打开</string>
     <string name="show_img">查看图片</string>
     <string name="save_img">保存图片</string>
-    <string name="history_">历史记录</string>
     <string name="find_hint">在这里输入查找内容</string>
     <string name="rule">常规</string>
     <string name="engine">搜索引擎</string>
@@ -86,12 +85,18 @@
     <string name="add">添加</string>
     <string name="input_bookmark_title">输入书签标题</string>
     <string name="input_bokkmark_site">输入书签网址</string>
-    <string name="ad">广告</string>
-    <string name="ad_loading">广告正在加载 …</string>
     <string name="regex" formatted="false"><![CDATA[[\\n`~!@#$%^&*()+=|{}\':;\',\\\\[\\\\]<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。， 、？]]]></string>
     <string name="file_name">文件名</string>
     <string name="dl_url">地址</string>
     <string name="input_file_name">输入文件名</string>
     <string name="input_dl_url">输入下载地址</string>
     <string name="file_name_notice">检查文件名，若文件名自动获取有误，请手动更改</string>
+    <string name="qq">添加QQ好友</string>
+    <string name="qq_tip">可以建议，也可以和作者一起探讨其他问题</string>
+    <string name="qq_group">加入MyHdg内测QQ群</string>
+    <string name="qq_group_tip">尝鲜内测，惊喜和意外谁先来临呢</string>
+    <string name="subscription">关注MyHdg微信公众号</string>
+    <string name="subscription_tip">敬请期待，微信公众号暂未创建</string>
+    <string name="alipay">支付宝请我喝瓶水</string>
+    <string name="alipay_tip">自愿捐赠，捐赠与否不影响BIJOU任何功能</string>
 </resources>

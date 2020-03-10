@@ -65,7 +65,3 @@
     @Upload.* <methods>;
     @DownloadGroup.* <methods>;
 }
-
-#AD
--keep public class com.baidu.appx.**
--keep public class com.baidu.appx.** { *; }
